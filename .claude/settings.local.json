@@ -7,6 +7,10 @@
       "Bash(git config:*)",
       "Bash(gh repo create:*)",
       "Bash(npm install)",
+      "Bash(mv:*)",
+      "Bash(npm run start:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
       "Bash(mv:*)"
     ],
     "deny": []
