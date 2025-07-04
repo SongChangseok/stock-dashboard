@@ -2,12 +2,12 @@ import React from 'react';
 import StockDashboard from './components/StockDashboard';
 import './index.css';
 
-function App() {
+const App: React.FC = () => {
   return (
     <div className="App">
       <StockDashboard />
     </div>
   );
-}
+};
 
 export default App;
