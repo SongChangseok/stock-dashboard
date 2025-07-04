@@ -11,7 +11,16 @@
       "Bash(npm run start:*)",
       "Bash(lsof:*)",
       "Bash(kill:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(gh issue create:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(gh auth:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(npm start)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
