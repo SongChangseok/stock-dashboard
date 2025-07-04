@@ -6,6 +6,7 @@ import {
   loadFromLocalStorage,
   validatePortfolioData 
 } from '../utils/portfolio';
+import { useToast } from './ToastContext';
 
 // Action types
 type PortfolioAction =
@@ -122,6 +123,7 @@ const PortfolioContext = createContext<PortfolioContextType | undefined>(undefin
 // Provider component
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(portfolioReducer, initialState);
+  const { addToast } = useToast();
 
   // Initialize metrics on mount
   useEffect(() => {
@@ -152,10 +154,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       dispatch({ type: 'ADD_STOCK', payload: newStock });
       dispatch({ type: 'SET_LOADING', payload: false });
+      
+      addToast({
+        type: 'success',
+        title: 'Stock Added',
+        message: `${newStock.ticker} has been added to your portfolio.`
+      });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      addToast({
+        type: 'error',
+        title: 'Add Stock Failed',
+        message: (error as Error).message
+      });
     }
-  }, []);
+  }, [addToast]);
 
   // Update stock
   const updateStock = useCallback((id: number, formData: StockFormData) => {
@@ -178,19 +191,39 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       dispatch({ type: 'UPDATE_STOCK', payload: updatedStock });
       dispatch({ type: 'SET_LOADING', payload: false });
+      
+      addToast({
+        type: 'success',
+        title: 'Stock Updated',
+        message: `${updatedStock.ticker} has been updated successfully.`
+      });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      addToast({
+        type: 'error',
+        title: 'Update Stock Failed',
+        message: (error as Error).message
+      });
     }
-  }, []);
+  }, [addToast]);
 
   // Delete stock
   const deleteStock = useCallback((id: number) => {
     try {
+      const stock = state.stocks.find(s => s.id === id);
       dispatch({ type: 'DELETE_STOCK', payload: id });
+      
+      if (stock) {
+        addToast({
+          type: 'success',
+          title: 'Stock Removed',
+          message: `${stock.ticker} has been removed from your portfolio.`
+        });
+      }
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
     }
-  }, []);
+  }, [state.stocks, addToast]);
 
   // Import stocks
   const importStocks = useCallback((data: ExportData) => {
@@ -212,10 +245,21 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       dispatch({ type: 'SET_STOCKS', payload: importedStocks });
       dispatch({ type: 'SET_LOADING', payload: false });
+      
+      addToast({
+        type: 'success',
+        title: 'Data Imported',
+        message: `Successfully imported ${importedStocks.length} stocks.`
+      });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      addToast({
+        type: 'error',
+        title: 'Import Failed',
+        message: (error as Error).message
+      });
     }
-  }, []);
+  }, [addToast]);
 
   // Export stocks
   const exportStocks = useCallback((): ExportData => {

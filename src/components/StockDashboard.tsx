@@ -176,7 +176,7 @@ const StockDashboard: React.FC = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="fixed top-4 right-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 z-50">
+          <div className="fixed top-4 right-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 z-50 animate-slide-in-right">
             <div className="flex items-center justify-between">
               <p className="text-red-400">{error}</p>
               <button 
