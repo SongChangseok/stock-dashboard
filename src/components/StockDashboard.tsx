@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useToastContext } from '../contexts/ToastContext';
 import { FormData } from './stock/StockForm';
 import { Stock } from '../types/portfolio';
 import Header from './layout/Header';
@@ -9,7 +10,7 @@ import PortfolioTable from './portfolio/PortfolioTable';
 import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 import { Upload } from 'lucide-react';
-import { validateImportData, validateFileType } from '../utils/validation';
+import { validateImportData, validateFileType, validateFileSize } from '../utils/validation';
 
 const StockDashboard: React.FC = () => {
   const {
@@ -23,6 +24,8 @@ const StockDashboard: React.FC = () => {
     calculateProfitLoss,
     calculateProfitLossPercent
   } = usePortfolio();
+  
+  const toast = useToastContext();
 
   const [showModal, setShowModal] = useState(false);
   const [editingStock, setEditingStock] = useState<Stock | null>(null);
@@ -80,41 +83,75 @@ const StockDashboard: React.FC = () => {
   };
 
   const handleExportData = () => {
-    const data = exportData();
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `portfolio_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    try {
+      if (stocks.length === 0) {
+        toast.showWarning('내보낼 데이터 없음', '포트폴리오에 주식이 없습니다.');
+        return;
+      }
+
+      const data = exportData();
+      const dataStr = JSON.stringify(data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `portfolio_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.showSuccess('데이터 내보내기 완료', '포트폴리오 데이터가 성공적으로 다운로드되었습니다.');
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast.showError('내보내기 실패', '데이터 내보내기 중 오류가 발생했습니다.');
+    }
   };
 
 
   const handleImportData = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        const validation = validateImportData(data);
-        
-        if (!validation.isValid) {
-          setImportError(validation.errors.join(', '));
-          return;
-        }
-        
-        importStocks(data.stocks);
-        setShowImportModal(false);
-        setImportError('');
-      } catch (error) {
-        setImportError((error as Error).message);
+    try {
+      // 파일 크기 확인 (5MB 제한)
+      const sizeValidation = validateFileSize(file, 5);
+      if (!sizeValidation.isValid) {
+        setImportError(sizeValidation.errors[0]);
+        return;
       }
-    };
-    reader.readAsText(file);
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+          const validation = validateImportData(data);
+          
+          if (!validation.isValid) {
+            setImportError(validation.errors.join(', '));
+            toast.showError('데이터 검증 실패', validation.errors[0]);
+            return;
+          }
+          
+          importStocks(data.stocks);
+          setShowImportModal(false);
+          setImportError('');
+        } catch (error) {
+          const errorMessage = 'JSON 파일 형식이 올바르지 않습니다.';
+          setImportError(errorMessage);
+          toast.showError('파일 읽기 실패', errorMessage);
+        }
+      };
+      
+      reader.onerror = () => {
+        const errorMessage = '파일을 읽는 도중 오류가 발생했습니다.';
+        setImportError(errorMessage);
+        toast.showError('파일 읽기 실패', errorMessage);
+      };
+      
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('Error handling import:', error);
+      toast.showError('가져오기 실패', '예상치 못한 오류가 발생했습니다.');
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -137,7 +174,9 @@ const StockDashboard: React.FC = () => {
       const fileValidation = validateFileType(file, ['application/json']);
       
       if (!fileValidation.isValid && !file.name.endsWith('.json')) {
-        setImportError('Please select a valid JSON file');
+        const errorMessage = 'JSON 파일만 업로드 가능합니다.';
+        setImportError(errorMessage);
+        toast.showError('파일 형식 오류', errorMessage);
         return;
       }
       

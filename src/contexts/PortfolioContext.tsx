@@ -6,7 +6,8 @@ import {
   calculateTotalValue,
   calculateTotalProfitLoss
 } from '../utils/portfolioCalculations';
-import { createStock, normalizeTickerSymbol } from '../utils/stockHelpers';
+import { createStock, normalizeTickerSymbol, isValidStock } from '../utils/stockHelpers';
+import { useToastContext } from './ToastContext';
 
 interface PortfolioContextType {
   stocks: Stock[];
@@ -40,47 +41,109 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     { id: 2, ticker: 'GOOGL', buyPrice: 2500.00, currentPrice: 2650.00, quantity: 5 },
     { id: 3, ticker: 'TSLA', buyPrice: 800.00, currentPrice: 750.00, quantity: 8 },
   ]);
+  const toast = useToastContext();
 
   const addStock = (stockData: Omit<Stock, 'id'>) => {
-    const newStock = createStock(
-      stockData.ticker,
-      stockData.buyPrice,
-      stockData.currentPrice,
-      stockData.quantity
-    );
-    setStocks(prev => [...prev, newStock]);
+    try {
+      if (!isValidStock(stockData)) {
+        toast.showError('주식 추가 실패', '유효하지 않은 주식 데이터입니다.');
+        return;
+      }
+
+      const newStock = createStock(
+        stockData.ticker,
+        stockData.buyPrice,
+        stockData.currentPrice,
+        stockData.quantity
+      );
+      
+      // 중복 티커 확인
+      const existingStock = stocks.find(stock => stock.ticker === newStock.ticker);
+      if (existingStock) {
+        toast.showWarning('중복된 주식', `${newStock.ticker}는 이미 포트폴리오에 있습니다.`);
+        return;
+      }
+
+      setStocks(prev => [...prev, newStock]);
+      toast.showSuccess('주식 추가 완료', `${newStock.ticker}가 포트폴리오에 추가되었습니다.`);
+    } catch (error) {
+      console.error('Error adding stock:', error);
+      toast.showError('주식 추가 실패', '예상치 못한 오류가 발생했습니다.');
+    }
   };
 
   const updateStock = (id: number, stockData: Omit<Stock, 'id'>) => {
-    setStocks(prev => 
-      prev.map(stock => 
-        stock.id === id 
-          ? { 
-              ...stockData, 
-              id, 
-              ticker: normalizeTickerSymbol(stockData.ticker),
-              lastUpdated: new Date()
-            }
-          : stock
-      )
-    );
+    try {
+      if (!isValidStock(stockData)) {
+        toast.showError('주식 수정 실패', '유효하지 않은 주식 데이터입니다.');
+        return;
+      }
+
+      const existingStock = stocks.find(stock => stock.id === id);
+      if (!existingStock) {
+        toast.showError('주식 수정 실패', '수정하려는 주식을 찾을 수 없습니다.');
+        return;
+      }
+
+      setStocks(prev => 
+        prev.map(stock => 
+          stock.id === id 
+            ? { 
+                ...stockData, 
+                id, 
+                ticker: normalizeTickerSymbol(stockData.ticker),
+                lastUpdated: new Date()
+              }
+            : stock
+        )
+      );
+      
+      toast.showSuccess('주식 수정 완료', `${stockData.ticker} 정보가 업데이트되었습니다.`);
+    } catch (error) {
+      console.error('Error updating stock:', error);
+      toast.showError('주식 수정 실패', '예상치 못한 오류가 발생했습니다.');
+    }
   };
 
   const deleteStock = (id: number) => {
-    setStocks(prev => prev.filter(stock => stock.id !== id));
+    try {
+      const stockToDelete = stocks.find(stock => stock.id === id);
+      if (!stockToDelete) {
+        toast.showError('주식 삭제 실패', '삭제하려는 주식을 찾을 수 없습니다.');
+        return;
+      }
+
+      setStocks(prev => prev.filter(stock => stock.id !== id));
+      toast.showSuccess('주식 삭제 완료', `${stockToDelete.ticker}가 포트폴리오에서 제거되었습니다.`);
+    } catch (error) {
+      console.error('Error deleting stock:', error);
+      toast.showError('주식 삭제 실패', '예상치 못한 오류가 발생했습니다.');
+    }
   };
 
   const importStocks = (importedStocks: Stock[]) => {
-    const stocksWithNewIds = importedStocks.map((stock, index) => 
-      createStock(
-        stock.ticker,
-        stock.buyPrice,
-        stock.currentPrice,
-        stock.quantity,
-        Date.now() + index
-      )
-    );
-    setStocks(stocksWithNewIds);
+    try {
+      if (!importedStocks || importedStocks.length === 0) {
+        toast.showWarning('데이터 없음', '가져올 주식 데이터가 없습니다.');
+        return;
+      }
+
+      const stocksWithNewIds = importedStocks.map((stock, index) => 
+        createStock(
+          stock.ticker,
+          stock.buyPrice,
+          stock.currentPrice,
+          stock.quantity,
+          Date.now() + index
+        )
+      );
+      
+      setStocks(stocksWithNewIds);
+      toast.showSuccess('데이터 가져오기 완료', `${importedStocks.length}개의 주식을 성공적으로 가져왔습니다.`);
+    } catch (error) {
+      console.error('Error importing stocks:', error);
+      toast.showError('데이터 가져오기 실패', '예상치 못한 오류가 발생했습니다.');
+    }
   };
 
   const getTotalValue = (): number => {
