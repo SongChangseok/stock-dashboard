@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 import { Stock } from '../../types/portfolio';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 interface StockRowProps {
   stock: Stock;
@@ -14,12 +15,6 @@ const StockRow: React.FC<StockRowProps> = ({ stock, calculateProfitLoss, calcula
   const profitLoss = calculateProfitLoss(stock);
   const profitLossPercent = calculateProfitLossPercent(stock);
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   return (
     <tr className="border-t border-gray-700 hover:bg-spotify-dark-gray transition-colors">
@@ -29,10 +24,10 @@ const StockRow: React.FC<StockRowProps> = ({ stock, calculateProfitLoss, calcula
       <td className="px-4 py-3 text-gray-300">{stock.quantity}</td>
       <td className="px-4 py-3 text-gray-300">{formatCurrency(stock.currentPrice * stock.quantity)}</td>
       <td className={`px-4 py-3 font-medium ${profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-        {profitLoss >= 0 ? '+' : ''}{formatCurrency(profitLoss)}
+        {formatCurrency(profitLoss)}
       </td>
       <td className={`px-4 py-3 font-medium ${profitLossPercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-        {profitLossPercent >= 0 ? '+' : ''}{profitLossPercent.toFixed(2)}%
+        {formatPercentage(profitLossPercent)}
       </td>
       <td className="px-4 py-3">
         <div className="flex space-x-2">

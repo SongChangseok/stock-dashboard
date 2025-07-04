@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Stock } from '../../types/portfolio';
+import { validateStockData } from '../../utils/validation';
 
 export interface FormData {
   ticker: string;
@@ -16,6 +17,7 @@ interface StockFormProps {
 }
 
 const StockForm: React.FC<StockFormProps> = ({ formData, setFormData, onSubmit, editingStock }) => {
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -25,6 +27,20 @@ const StockForm: React.FC<StockFormProps> = ({ formData, setFormData, onSubmit, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const validation = validateStockData(
+      formData.ticker,
+      formData.buyPrice,
+      formData.currentPrice,
+      formData.quantity
+    );
+    
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      return;
+    }
+    
+    setValidationErrors([]);
     onSubmit();
   };
 
@@ -87,6 +103,16 @@ const StockForm: React.FC<StockFormProps> = ({ formData, setFormData, onSubmit, 
           required
         />
       </div>
+
+      {validationErrors.length > 0 && (
+        <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded-lg p-3">
+          <ul className="text-red-400 text-sm space-y-1">
+            {validationErrors.map((error, index) => (
+              <li key={index}>• {error}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex space-x-3 pt-4">
         <button

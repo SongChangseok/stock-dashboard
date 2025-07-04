@@ -9,6 +9,7 @@ import PortfolioTable from './portfolio/PortfolioTable';
 import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 import { Upload } from 'lucide-react';
+import { validateImportData, validateFileType } from '../utils/validation';
 
 const StockDashboard: React.FC = () => {
   const {
@@ -93,39 +94,19 @@ const StockDashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const validateImportData = (data: any): boolean => {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid JSON format');
-    }
-    
-    if (!data.stocks || !Array.isArray(data.stocks)) {
-      throw new Error('Missing or invalid stocks array');
-    }
-    
-    data.stocks.forEach((stock: any, index: number) => {
-      if (!stock.ticker || typeof stock.ticker !== 'string') {
-        throw new Error(`Invalid ticker at position ${index + 1}`);
-      }
-      if (typeof stock.buyPrice !== 'number' || stock.buyPrice <= 0) {
-        throw new Error(`Invalid buy price at position ${index + 1}`);
-      }
-      if (typeof stock.currentPrice !== 'number' || stock.currentPrice <= 0) {
-        throw new Error(`Invalid current price at position ${index + 1}`);
-      }
-      if (typeof stock.quantity !== 'number' || stock.quantity <= 0) {
-        throw new Error(`Invalid quantity at position ${index + 1}`);
-      }
-    });
-    
-    return true;
-  };
 
   const handleImportData = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        validateImportData(data);
+        const validation = validateImportData(data);
+        
+        if (!validation.isValid) {
+          setImportError(validation.errors.join(', '));
+          return;
+        }
+        
         importStocks(data.stocks);
         setShowImportModal(false);
         setImportError('');
@@ -153,11 +134,14 @@ const StockDashboard: React.FC = () => {
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       const file = files[0];
-      if (file.type === 'application/json' || file.name.endsWith('.json')) {
-        handleImportData(file);
-      } else {
+      const fileValidation = validateFileType(file, ['application/json']);
+      
+      if (!fileValidation.isValid && !file.name.endsWith('.json')) {
         setImportError('Please select a valid JSON file');
+        return;
       }
+      
+      handleImportData(file);
     }
   };
 

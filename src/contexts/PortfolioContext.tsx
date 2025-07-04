@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { Stock, ExportData } from '../types/portfolio';
+import {
+  calculateProfitLoss,
+  calculateProfitLossPercent,
+  calculateTotalValue,
+  calculateTotalProfitLoss
+} from '../utils/portfolioCalculations';
+import { createStock, normalizeTickerSymbol } from '../utils/stockHelpers';
 
 interface PortfolioContextType {
   stocks: Stock[];
@@ -35,11 +42,12 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
   ]);
 
   const addStock = (stockData: Omit<Stock, 'id'>) => {
-    const newStock: Stock = {
-      ...stockData,
-      id: Date.now(),
-      ticker: stockData.ticker.toUpperCase()
-    };
+    const newStock = createStock(
+      stockData.ticker,
+      stockData.buyPrice,
+      stockData.currentPrice,
+      stockData.quantity
+    );
     setStocks(prev => [...prev, newStock]);
   };
 
@@ -47,7 +55,12 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     setStocks(prev => 
       prev.map(stock => 
         stock.id === id 
-          ? { ...stockData, id, ticker: stockData.ticker.toUpperCase() }
+          ? { 
+              ...stockData, 
+              id, 
+              ticker: normalizeTickerSymbol(stockData.ticker),
+              lastUpdated: new Date()
+            }
           : stock
       )
     );
@@ -58,24 +71,28 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
   };
 
   const importStocks = (importedStocks: Stock[]) => {
-    const stocksWithNewIds = importedStocks.map((stock, index) => ({
-      ...stock,
-      id: Date.now() + index,
-      ticker: stock.ticker.toUpperCase()
-    }));
+    const stocksWithNewIds = importedStocks.map((stock, index) => 
+      createStock(
+        stock.ticker,
+        stock.buyPrice,
+        stock.currentPrice,
+        stock.quantity,
+        Date.now() + index
+      )
+    );
     setStocks(stocksWithNewIds);
   };
 
-  const calculateTotalValue = (): number => {
-    return stocks.reduce((total, stock) => total + (stock.currentPrice * stock.quantity), 0);
+  const getTotalValue = (): number => {
+    return calculateTotalValue(stocks);
   };
 
-  const calculateProfitLoss = (stock: Stock): number => {
-    return (stock.currentPrice - stock.buyPrice) * stock.quantity;
+  const getProfitLoss = (stock: Stock): number => {
+    return calculateProfitLoss(stock);
   };
 
-  const calculateProfitLossPercent = (stock: Stock): number => {
-    return ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
+  const getProfitLossPercent = (stock: Stock): number => {
+    return calculateProfitLossPercent(stock);
   };
 
   const exportData = (): ExportData => {
@@ -83,9 +100,9 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
       version: "1.0",
       exportDate: new Date().toISOString(),
       metadata: {
-        totalValue: calculateTotalValue(),
+        totalValue: calculateTotalValue(stocks),
         totalPositions: stocks.length,
-        totalProfitLoss: stocks.reduce((total, stock) => total + calculateProfitLoss(stock), 0)
+        totalProfitLoss: calculateTotalProfitLoss(stocks)
       },
       stocks: stocks
     };
@@ -98,9 +115,9 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     deleteStock,
     importStocks,
     exportData,
-    calculateTotalValue,
-    calculateProfitLoss,
-    calculateProfitLossPercent
+    calculateTotalValue: getTotalValue,
+    calculateProfitLoss: getProfitLoss,
+    calculateProfitLossPercent: getProfitLossPercent
   };
 
   return (

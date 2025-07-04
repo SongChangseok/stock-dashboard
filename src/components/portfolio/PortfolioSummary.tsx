@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react';
 import { Stock } from '../../types/portfolio';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 interface PortfolioSummaryProps {
   stocks: Stock[];
@@ -13,12 +14,6 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ stocks, calculateTo
   const totalProfitLoss = stocks.reduce((total, stock) => total + calculateProfitLoss(stock), 0);
   const totalProfitLossPercent = totalValue > 0 ? (totalProfitLoss / (totalValue - totalProfitLoss)) * 100 : 0;
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -53,7 +48,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({ stocks, calculateTo
           <div>
             <p className="text-gray-400 text-sm font-medium">Total P&L %</p>
             <p className={`text-2xl font-bold mt-1 ${totalProfitLossPercent >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {totalProfitLossPercent >= 0 ? '+' : ''}{totalProfitLossPercent.toFixed(2)}%
+              {formatPercentage(totalProfitLossPercent)}
             </p>
           </div>
           <BarChart3 className="h-8 w-8 text-spotify-green" />

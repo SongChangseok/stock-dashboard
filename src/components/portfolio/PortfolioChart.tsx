@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Stock } from '../../types/portfolio';
+import { formatCurrency } from '../../utils/formatters';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#84cc16', '#ec4899'];
 
@@ -23,12 +24,6 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ stocks }) => {
     }));
   };
 
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
