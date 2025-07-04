@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Stock } from '../types/portfolio';
+import { usePortfolio } from '../contexts/PortfolioContext';
 import { FormData } from './stock/StockForm';
+import { Stock } from '../types/portfolio';
 import Header from './layout/Header';
 import PortfolioSummary from './portfolio/PortfolioSummary';
 import PortfolioChart from './portfolio/PortfolioChart';
@@ -10,12 +11,18 @@ import StockForm from './stock/StockForm';
 import { Upload } from 'lucide-react';
 
 const StockDashboard: React.FC = () => {
-  const [stocks, setStocks] = useState<Stock[]>([
-    { id: 1, ticker: 'AAPL', buyPrice: 150.00, currentPrice: 185.50, quantity: 10 },
-    { id: 2, ticker: 'GOOGL', buyPrice: 2500.00, currentPrice: 2650.00, quantity: 5 },
-    { id: 3, ticker: 'TSLA', buyPrice: 800.00, currentPrice: 750.00, quantity: 8 },
-  ]);
-  
+  const {
+    stocks,
+    addStock,
+    updateStock,
+    deleteStock,
+    importStocks,
+    exportData,
+    calculateTotalValue,
+    calculateProfitLoss,
+    calculateProfitLossPercent
+  } = usePortfolio();
+
   const [showModal, setShowModal] = useState(false);
   const [editingStock, setEditingStock] = useState<Stock | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -46,7 +53,7 @@ const StockDashboard: React.FC = () => {
   };
 
   const handleDeleteStock = (id: number) => {
-    setStocks(stocks.filter(stock => stock.id !== id));
+    deleteStock(id);
   };
 
   const handleSubmit = () => {
@@ -54,49 +61,26 @@ const StockDashboard: React.FC = () => {
       return;
     }
     
-    const newStock: Stock = {
-      id: editingStock ? editingStock.id : Date.now(),
-      ticker: formData.ticker.toUpperCase(),
+    const stockData = {
+      ticker: formData.ticker,
       buyPrice: parseFloat(formData.buyPrice),
       currentPrice: parseFloat(formData.currentPrice),
       quantity: parseInt(formData.quantity)
     };
 
     if (editingStock) {
-      setStocks(stocks.map(stock => stock.id === editingStock.id ? newStock : stock));
+      updateStock(editingStock.id, stockData);
     } else {
-      setStocks([...stocks, newStock]);
+      addStock(stockData);
     }
 
     setShowModal(false);
     setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
   };
 
-  const calculateTotalValue = (): number => {
-    return stocks.reduce((total, stock) => total + (stock.currentPrice * stock.quantity), 0);
-  };
-
-  const calculateProfitLoss = (stock: Stock): number => {
-    return (stock.currentPrice - stock.buyPrice) * stock.quantity;
-  };
-
-  const calculateProfitLossPercent = (stock: Stock): number => {
-    return ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
-  };
-
   const handleExportData = () => {
-    const exportData = {
-      version: "1.0",
-      exportDate: new Date().toISOString(),
-      metadata: {
-        totalValue: calculateTotalValue(),
-        totalPositions: stocks.length,
-        totalProfitLoss: stocks.reduce((total, stock) => total + calculateProfitLoss(stock), 0)
-      },
-      stocks: stocks
-    };
-
-    const dataStr = JSON.stringify(exportData, null, 2);
+    const data = exportData();
+    const dataStr = JSON.stringify(data, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     
@@ -142,16 +126,7 @@ const StockDashboard: React.FC = () => {
       try {
         const data = JSON.parse(e.target?.result as string);
         validateImportData(data);
-        
-        const importedStocks: Stock[] = data.stocks.map((stock: any, index: number) => ({
-          id: Date.now() + index,
-          ticker: stock.ticker.toUpperCase(),
-          buyPrice: stock.buyPrice,
-          currentPrice: stock.currentPrice,
-          quantity: stock.quantity
-        }));
-        
-        setStocks(importedStocks);
+        importStocks(data.stocks);
         setShowImportModal(false);
         setImportError('');
       } catch (error) {

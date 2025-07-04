@@ -1,12 +1,15 @@
 import React from 'react';
 import StockDashboard from './components/StockDashboard';
+import { PortfolioProvider } from './contexts/PortfolioContext';
 import './index.css';
 
 function App() {
   return (
-    <div className="App">
-      <StockDashboard />
-    </div>
+    <PortfolioProvider>
+      <div className="App">
+        <StockDashboard />
+      </div>
+    </PortfolioProvider>
   );
 }
 
