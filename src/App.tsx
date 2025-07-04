@@ -3,7 +3,7 @@ import StockDashboard from './components/StockDashboard';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import './index.css';
 
-function App() {
+const App: React.FC = () => {
   return (
     <PortfolioProvider>
       <div className="App">
@@ -11,6 +11,6 @@ function App() {
       </div>
     </PortfolioProvider>
   );
-}
+};
 
 export default App;

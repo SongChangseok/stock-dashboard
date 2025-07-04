@@ -15,6 +15,10 @@ npm run eject      # Eject from Create React App (irreversible)
 ### Linting & Formatting
 This project uses Create React App's built-in ESLint configuration. No additional linting commands are configured.
 
+## Git Conventions
+
+- Write git commit messages in Korean
+
 ## Architecture Overview
 
 This is a single-page React application built with Create React App that implements a Spotify-inspired stock portfolio dashboard.
