@@ -4,6 +4,7 @@ export interface Stock {
   buyPrice: number;
   currentPrice: number;
   quantity: number;
+  lastUpdated?: Date;
 }
 
 export interface StockFormData {
@@ -28,4 +29,29 @@ export interface ExportData {
     totalProfitLoss: number;
   };
   stocks: Stock[];
+}
+
+export interface PortfolioMetrics {
+  totalValue: number;
+  totalProfitLoss: number;
+  profitLossPercentage: number;
+  bestPerformer?: Stock;
+  worstPerformer?: Stock;
+}
+
+export interface StockCalculation {
+  marketValue: number;
+  profitLoss: number;
+  profitLossPercent: number;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ImportValidationResult {
+  isValid: boolean;
+  errors: ValidationError[];
+  warnings: string[];
 }

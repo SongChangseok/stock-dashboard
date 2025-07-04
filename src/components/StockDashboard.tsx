@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
-import { Stock, StockFormData, PortfolioData, ExportData } from '../types/portfolio';
+import { Stock, StockFormData } from '../types/portfolio';
+import { usePortfolio } from '../contexts/PortfolioContext';
+import { getColorPalette } from '../utils/portfolio';
 import Header from './layout/Header';
 import PortfolioSummary from './portfolio/PortfolioSummary';
 import PortfolioChart from './portfolio/PortfolioChart';
@@ -9,14 +11,11 @@ import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 
 const StockDashboard: React.FC = () => {
-  const [stocks, setStocks] = useState<Stock[]>([
-    { id: 1, ticker: 'AAPL', buyPrice: 150.00, currentPrice: 185.50, quantity: 10 },
-    { id: 2, ticker: 'GOOGL', buyPrice: 2500.00, currentPrice: 2650.00, quantity: 5 },
-    { id: 3, ticker: 'TSLA', buyPrice: 800.00, currentPrice: 750.00, quantity: 8 },
-  ]);
+  const { state, addStock, updateStock, deleteStock, importStocks, exportStocks, clearError } = usePortfolio();
+  const { stocks, metrics, loading, error } = state;
   
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [editingStock, setEditingStock] = useState<Stock | null>(null);
+  const [editingStockId, setEditingStockId] = useState<number | null>(null);
   const [formData, setFormData] = useState<StockFormData>({
     ticker: '',
     buyPrice: '',
@@ -28,13 +27,13 @@ const StockDashboard: React.FC = () => {
   const [importError, setImportError] = useState<string>('');
 
   const handleAddStock = (): void => {
-    setEditingStock(null);
+    setEditingStockId(null);
     setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
     setShowModal(true);
   };
 
   const handleEditStock = (stock: Stock): void => {
-    setEditingStock(stock);
+    setEditingStockId(stock.id);
     setFormData({
       ticker: stock.ticker,
       buyPrice: stock.buyPrice.toString(),
@@ -45,7 +44,7 @@ const StockDashboard: React.FC = () => {
   };
 
   const handleDeleteStock = (id: number): void => {
-    setStocks(stocks.filter(stock => stock.id !== id));
+    deleteStock(id);
   };
 
   const handleSubmit = (): void => {
@@ -53,58 +52,28 @@ const StockDashboard: React.FC = () => {
       return;
     }
     
-    const newStock: Stock = {
-      id: editingStock ? editingStock.id : Date.now(),
-      ticker: formData.ticker.toUpperCase(),
-      buyPrice: parseFloat(formData.buyPrice),
-      currentPrice: parseFloat(formData.currentPrice),
-      quantity: parseInt(formData.quantity)
-    };
-
-    if (editingStock) {
-      setStocks(stocks.map(stock => stock.id === editingStock.id ? newStock : stock));
+    if (editingStockId) {
+      updateStock(editingStockId, formData);
     } else {
-      setStocks([...stocks, newStock]);
+      addStock(formData);
     }
 
     setShowModal(false);
     setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
   };
 
-  const calculateTotalValue = (): number => {
-    return stocks.reduce((total, stock) => total + (stock.currentPrice * stock.quantity), 0);
-  };
-
-  const calculateProfitLoss = (stock: Stock): number => {
-    return (stock.currentPrice - stock.buyPrice) * stock.quantity;
-  };
-
-  const calculateTotalProfitLoss = (): number => {
-    return stocks.reduce((total, stock) => total + calculateProfitLoss(stock), 0);
-  };
-
-  const getPieChartData = (): PortfolioData[] => {
-    const COLORS = ['#6366f1', '#8b5cf6', '#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#84cc16', '#ec4899'];
+  const getPieChartData = () => {
+    const colors = getColorPalette(stocks.length);
     
     return stocks.map((stock, index) => ({
       name: stock.ticker,
       value: stock.currentPrice * stock.quantity,
-      color: COLORS[index % COLORS.length]
+      color: colors[index]
     }));
   };
 
   const handleExportData = (): void => {
-    const exportData: ExportData = {
-      version: "1.0",
-      exportDate: new Date().toISOString(),
-      metadata: {
-        totalValue: calculateTotalValue(),
-        totalPositions: stocks.length,
-        totalProfitLoss: calculateTotalProfitLoss()
-      },
-      stocks: stocks
-    };
-
+    const exportData = exportStocks();
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -118,49 +87,12 @@ const StockDashboard: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const validateImportData = (data: any): boolean => {
-    if (!data || typeof data !== 'object') {
-      throw new Error('Invalid JSON format');
-    }
-    
-    if (!data.stocks || !Array.isArray(data.stocks)) {
-      throw new Error('Missing or invalid stocks array');
-    }
-    
-    data.stocks.forEach((stock: any, index: number) => {
-      if (!stock.ticker || typeof stock.ticker !== 'string') {
-        throw new Error(`Invalid ticker at position ${index + 1}`);
-      }
-      if (typeof stock.buyPrice !== 'number' || stock.buyPrice <= 0) {
-        throw new Error(`Invalid buy price at position ${index + 1}`);
-      }
-      if (typeof stock.currentPrice !== 'number' || stock.currentPrice <= 0) {
-        throw new Error(`Invalid current price at position ${index + 1}`);
-      }
-      if (typeof stock.quantity !== 'number' || stock.quantity <= 0) {
-        throw new Error(`Invalid quantity at position ${index + 1}`);
-      }
-    });
-    
-    return true;
-  };
-
   const handleImportData = (file: File): void => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        validateImportData(data);
-        
-        const importedStocks: Stock[] = data.stocks.map((stock: any, index: number) => ({
-          id: Date.now() + index,
-          ticker: stock.ticker.toUpperCase(),
-          buyPrice: stock.buyPrice,
-          currentPrice: stock.currentPrice,
-          quantity: stock.quantity
-        }));
-        
-        setStocks(importedStocks);
+        importStocks(data);
         setShowImportModal(false);
         setImportError('');
       } catch (error) {
@@ -228,9 +160,9 @@ const StockDashboard: React.FC = () => {
         />
 
         <PortfolioSummary 
-          totalValue={calculateTotalValue()}
+          totalValue={metrics.totalValue}
           totalPositions={stocks.length}
-          totalProfitLoss={calculateTotalProfitLoss()}
+          totalProfitLoss={metrics.totalProfitLoss}
         />
 
         <PortfolioChart data={getPieChartData()} />
@@ -242,18 +174,40 @@ const StockDashboard: React.FC = () => {
           onAddStock={handleAddStock}
         />
 
+        {/* Error Display */}
+        {error && (
+          <div className="fixed top-4 right-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 z-50">
+            <div className="flex items-center justify-between">
+              <p className="text-red-400">{error}</p>
+              <button 
+                onClick={clearError}
+                className="ml-4 text-red-400 hover:text-red-300"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading Overlay */}
+        {loading && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+          </div>
+        )}
+
         {/* Stock Form Modal */}
         <Modal 
           isOpen={showModal} 
           onClose={closeModal}
-          title={editingStock ? 'Edit Stock' : 'Add New Stock'}
+          title={editingStockId ? 'Edit Stock' : 'Add New Stock'}
         >
           <StockForm 
             formData={formData}
             onFormChange={setFormData}
             onSubmit={handleSubmit}
             onCancel={closeModal}
-            isEditing={!!editingStock}
+            isEditing={!!editingStockId}
           />
         </Modal>
 
@@ -289,9 +243,9 @@ const StockDashboard: React.FC = () => {
             <p className="text-sm text-slate-500">Supports JSON files exported from this application</p>
           </div>
 
-          {importError && (
+          {(importError || error) && (
             <div className="mt-4 p-4 bg-red-500/20 border border-red-500/30 rounded-xl">
-              <p className="text-red-400 text-sm">{importError}</p>
+              <p className="text-red-400 text-sm">{importError || error}</p>
             </div>
           )}
 
