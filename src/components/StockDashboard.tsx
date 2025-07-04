@@ -22,7 +22,10 @@ const StockDashboard: React.FC = () => {
     exportData,
     calculateTotalValue,
     calculateProfitLoss,
-    calculateProfitLossPercent
+    calculateProfitLossPercent,
+    refreshStockPrices,
+    isLoadingPrices,
+    isUsingRealTimeData
   } = usePortfolio();
   
   const toast = useToastContext();
@@ -198,6 +201,9 @@ const StockDashboard: React.FC = () => {
           onAddStock={handleAddStock}
           onExportData={handleExportData}
           onShowImportModal={() => setShowImportModal(true)}
+          onRefreshPrices={refreshStockPrices}
+          isLoadingPrices={isLoadingPrices}
+          isUsingRealTimeData={isUsingRealTimeData}
         />
 
         <PortfolioSummary 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Stock, ExportData } from '../types/portfolio';
 import {
   calculateProfitLoss,
@@ -8,6 +8,7 @@ import {
 } from '../utils/portfolioCalculations';
 import { createStock, normalizeTickerSymbol, isValidStock } from '../utils/stockHelpers';
 import { useToastContext } from './ToastContext';
+import { useStockPrice } from '../hooks/useStockPrice';
 
 interface PortfolioContextType {
   stocks: Stock[];
@@ -19,6 +20,9 @@ interface PortfolioContextType {
   calculateTotalValue: () => number;
   calculateProfitLoss: (stock: Stock) => number;
   calculateProfitLossPercent: (stock: Stock) => number;
+  refreshStockPrices: () => Promise<void>;
+  isLoadingPrices: boolean;
+  isUsingRealTimeData: boolean;
 }
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
@@ -42,6 +46,29 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     { id: 3, ticker: 'TSLA', buyPrice: 800.00, currentPrice: 750.00, quantity: 8 },
   ]);
   const toast = useToastContext();
+  
+  // 실시간 주식 가격 관리
+  const stockSymbols = stocks.map(stock => stock.ticker);
+  const { quotes, loading: isLoadingPrices, refreshAllQuotes, isDemo } = useStockPrice(stockSymbols);
+
+  // 실시간 가격 데이터로 주식 정보 업데이트
+  useEffect(() => {
+    if (quotes.size > 0) {
+      setStocks(prevStocks => 
+        prevStocks.map(stock => {
+          const quote = quotes.get(stock.ticker);
+          if (quote) {
+            return {
+              ...stock,
+              currentPrice: quote.price,
+              lastUpdated: new Date(quote.lastUpdated)
+            };
+          }
+          return stock;
+        })
+      );
+    }
+  }, [quotes]);
 
   const addStock = (stockData: Omit<Stock, 'id'>) => {
     try {
@@ -171,6 +198,10 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     };
   };
 
+  const refreshStockPrices = async () => {
+    await refreshAllQuotes(stockSymbols);
+  };
+
   const value: PortfolioContextType = {
     stocks,
     addStock,
@@ -180,7 +211,10 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     exportData,
     calculateTotalValue: getTotalValue,
     calculateProfitLoss: getProfitLoss,
-    calculateProfitLossPercent: getProfitLossPercent
+    calculateProfitLossPercent: getProfitLossPercent,
+    refreshStockPrices,
+    isLoadingPrices,
+    isUsingRealTimeData: !isDemo
   };
 
   return (
