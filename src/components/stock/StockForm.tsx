@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StockFormData, ValidationError } from '../../types/portfolio';
 import { validateStockFormData } from '../../utils/validation';
+import { useToast } from '../../contexts/ToastContext';
 
 interface StockFormProps {
   formData: StockFormData;
@@ -18,6 +19,7 @@ const StockForm: React.FC<StockFormProps> = ({
   isEditing 
 }) => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
+  const { error: showErrorToast } = useToast();
 
   const handleInputChange = (field: keyof StockFormData, value: string) => {
     onFormChange({ ...formData, [field]: value });
@@ -27,15 +29,27 @@ const StockForm: React.FC<StockFormProps> = ({
   };
 
   const handleSubmit = () => {
-    const validationErrors = validateStockFormData(formData);
-    
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
-      return;
+    try {
+      const validationErrors = validateStockFormData(formData);
+      
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
+        showErrorToast(
+          'Validation Error',
+          'Please check the form fields and correct any errors.'
+        );
+        return;
+      }
+      
+      setErrors([]);
+      onSubmit();
+    } catch (error) {
+      console.error('Form submission error:', error);
+      showErrorToast(
+        'Form Error',
+        'An unexpected error occurred while processing the form.'
+      );
     }
-    
-    setErrors([]);
-    onSubmit();
   };
 
   const getFieldError = (field: string): string | undefined => {
