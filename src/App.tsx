@@ -1,10 +1,13 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import StockDashboard from './components/StockDashboard';
+import GoalsPage from './components/goals/GoalsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { StockPriceProvider } from './contexts/StockPriceContext';
+import { GoalsProvider } from './contexts/GoalsContext';
 import './index.css';
 
 const App: React.FC = () => {
@@ -15,7 +18,14 @@ const App: React.FC = () => {
           <SettingsProvider>
             <PortfolioProvider>
               <StockPriceProvider>
-                <StockDashboard />
+                <GoalsProvider>
+                  <Router>
+                    <Routes>
+                      <Route path="/" element={<StockDashboard />} />
+                      <Route path="/goals" element={<GoalsPage />} />
+                    </Routes>
+                  </Router>
+                </GoalsProvider>
               </StockPriceProvider>
             </PortfolioProvider>
           </SettingsProvider>

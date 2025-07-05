@@ -21,7 +21,13 @@
       "Bash(grep:*)",
       "mcp__ide__getDiagnostics",
       "Bash(rg:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

@@ -6,18 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 ```bash
-npm start          # Start development server on localhost:3000
+npm run dev        # Start development server on localhost:3000
 npm run build      # Build production bundle
-npm test           # Run tests (Create React App test suite)
-npm run eject      # Eject from Create React App (irreversible)
+npm run lint       # Run ESLint
+npm run preview    # Preview production build locally
 ```
 
 ### Linting & Formatting
-This project uses Create React App's built-in ESLint configuration. No additional linting commands are configured.
+This project uses ESLint with TypeScript support. Run `npm run lint` to check for code quality issues.
 
 ## Architecture Overview
 
-This is a single-page React application built with Create React App that implements a Spotify-inspired stock portfolio dashboard.
+This is a single-page React application built with Vite that implements a Spotify-inspired stock portfolio dashboard.
 
 ### Component Structure
 - **App.js**: Root component that renders the main StockDashboard
