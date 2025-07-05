@@ -25,6 +25,8 @@ export interface PortfolioData {
   name: string;
   value: number;
   color: string;
+  quantity?: number;
+  allocation?: number;
 }
 
 export interface ExportData {

@@ -24,11 +24,26 @@ import {
   Activity,
   Target,
   AlertTriangle,
-  Award
+  Award,
+  Map,
+  BarChart3,
+  LineChart,
+  Grid
 } from 'lucide-react';
 import { usePortfolio } from '../../contexts/PortfolioContext';
 import { calculatePortfolioAnalytics } from '../../utils/advancedAnalytics';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
+
+// Import new chart components
+import PortfolioChart from './PortfolioChart';
+import TreemapChart from '../charts/TreemapChart';
+import HeatmapChart from '../charts/HeatmapChart';
+import SectorBarChart from '../charts/SectorBarChart';
+import PortfolioHistoryChart from '../charts/PortfolioHistoryChart';
+import ProfitLossChart from '../charts/ProfitLossChart';
+import PerformanceComparisonChart from '../charts/PerformanceComparisonChart';
+import { calculatePortfolioData } from '../../utils/portfolioCalculations';
+import { useStockPrices } from '../../contexts/StockPriceContext';
 
 interface AnalyticsCardProps {
   title: string;
@@ -76,16 +91,19 @@ const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
 
 const PortfolioAnalytics: React.FC = () => {
   const { state } = usePortfolio();
-  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'risk' | 'diversification' | 'sectors'>('overview');
+  const { stockPrices } = useStockPrices();
+  const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'risk' | 'diversification' | 'sectors' | 'charts'>('overview');
   
   const analytics = calculatePortfolioAnalytics(state.stocks);
+  const portfolioData = calculatePortfolioData(state.stocks, stockPrices);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <Activity size={16} /> },
     { id: 'performance', label: 'Performance', icon: <TrendingUp size={16} /> },
     { id: 'risk', label: 'Risk', icon: <Shield size={16} /> },
     { id: 'diversification', label: 'Diversification', icon: <PieChartIcon size={16} /> },
-    { id: 'sectors', label: 'Sectors', icon: <Target size={16} /> }
+    { id: 'sectors', label: 'Sectors', icon: <Target size={16} /> },
+    { id: 'charts', label: 'Interactive Charts', icon: <BarChart3 size={16} /> }
   ];
 
   // Chart colors matching Spotify design system
@@ -410,6 +428,72 @@ const PortfolioAnalytics: React.FC = () => {
     );
   };
 
+  const renderCharts = () => {
+    const [chartView, setChartView] = useState<'distribution' | 'treemap' | 'heatmap' | 'history' | 'profit-loss' | 'comparison'>('distribution');
+    
+    const chartTabs = [
+      { id: 'distribution', label: 'Distribution', icon: <PieChartIcon size={16} /> },
+      { id: 'treemap', label: 'Treemap', icon: <Map size={16} /> },
+      { id: 'heatmap', label: 'Heatmap', icon: <Grid size={16} /> },
+      { id: 'history', label: 'History', icon: <LineChart size={16} /> },
+      { id: 'profit-loss', label: 'P&L', icon: <BarChart3 size={16} /> },
+      { id: 'comparison', label: 'Benchmark', icon: <Target size={16} /> }
+    ];
+    
+    return (
+      <div className="space-y-6">
+        {/* Chart Navigation */}
+        <div className="glass-card-dark rounded-xl p-2">
+          <div className="flex flex-wrap gap-2">
+            {chartTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setChartView(tab.id as any)}
+                className={`
+                  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                  ${chartView === tab.id 
+                    ? 'bg-spotify-green text-white shadow-md' 
+                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  }
+                `}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Chart Content */}
+        <div className="min-h-[500px]">
+          {chartView === 'distribution' && (
+            <PortfolioChart data={portfolioData} />
+          )}
+          {chartView === 'treemap' && (
+            <TreemapChart data={portfolioData} />
+          )}
+          {chartView === 'heatmap' && (
+            <HeatmapChart stocks={state.stocks} />
+          )}
+          {chartView === 'history' && (
+            <PortfolioHistoryChart />
+          )}
+          {chartView === 'profit-loss' && (
+            <ProfitLossChart />
+          )}
+          {chartView === 'comparison' && (
+            <PerformanceComparisonChart />
+          )}
+        </div>
+        
+        {/* Additional Charts for Sectors */}
+        {chartView === 'distribution' && (
+          <SectorBarChart stocks={state.stocks} />
+        )}
+      </div>
+    );
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -422,6 +506,8 @@ const PortfolioAnalytics: React.FC = () => {
         return renderDiversification();
       case 'sectors':
         return renderSectors();
+      case 'charts':
+        return renderCharts();
       default:
         return renderOverview();
     }
