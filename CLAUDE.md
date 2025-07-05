@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🎯 Development Principles
+
+### Code Efficiency
+- **Minimize token usage**: Be concise, avoid unnecessary explanations or verbose comments
+- **Direct implementation**: Focus on code delivery, not documentation
+- **Compact responses**: Answer with minimal text, maximum code value
+
+### Design Requirements
+- **Trendy & Modern**: Follow 2024/2025 design trends (glassmorphism, subtle animations, micro-interactions)
+- **Compact Layout**: Maximize information density while maintaining readability
+- **Mobile-First**: Ensure responsive design with touch-friendly interfaces
+- **Performance-Focused**: Prioritize fast load times and smooth interactions
+
 ## Common Commands
 
 ### Development
@@ -17,21 +30,30 @@ This project uses ESLint with TypeScript support. Run `npm run lint` to check fo
 
 ## Architecture Overview
 
-This is a single-page React application built with Vite that implements a Spotify-inspired stock portfolio dashboard.
+Modern React application built with **Vite** + **TypeScript**, featuring real-time stock tracking, advanced analytics, and news integration.
 
-### Component Structure
-- **App.js**: Root component that renders the main StockDashboard
-- **StockDashboard.js**: Single monolithic component containing all portfolio management logic
-  - Manages stock data state with `useState`
-  - Handles CRUD operations for stocks
-  - Renders portfolio summary cards, pie chart, and data table
-  - Contains modal form for adding/editing stocks
+### Application Structure
+```
+src/
+├── components/          # UI components by feature
+│   ├── charts/         # Advanced visualizations (Recharts)
+│   ├── goals/          # Financial goal tracking
+│   ├── history/        # Portfolio performance tracking
+│   ├── news/           # News integration
+│   ├── portfolio/      # Core portfolio features
+│   └── common/         # Reusable UI components
+├── contexts/           # React Context providers
+├── hooks/              # Custom React hooks
+├── services/           # API integrations
+├── types/              # TypeScript definitions
+└── utils/              # Helper functions
+```
 
 ### State Management
-- Uses React hooks (`useState`) for local state management
-- No external state management library (Redux, Zustand, etc.)
-- Stock data is stored in memory and resets on page refresh
-- Stock object structure: `{ id, ticker, buyPrice, currentPrice, quantity }`
+- **Context API**: Multi-provider architecture
+- **Custom Hooks**: Feature-specific state logic
+- **LocalStorage**: Data persistence
+- **Real-time Updates**: WebSocket-like functionality
 
 ### Styling System
 - **Tailwind CSS** for utility-first styling
@@ -43,37 +65,58 @@ This is a single-page React application built with Vite that implements a Spotif
 - **Inter font** loaded from Google Fonts
 - **Dark theme** by default with custom scrollbar styling
 
-### Data Visualization
-- **Recharts** library for pie chart visualization
-- Portfolio distribution calculated as percentage of total value
-- Color-coded profit/loss indicators (green for gains, red for losses)
+### Core Features
 
-### Key Business Logic
-- **Portfolio calculations** performed in real-time:
-  - Total portfolio value: sum of (currentPrice × quantity)
-  - Individual P&L: (currentPrice - buyPrice) × quantity
-  - P&L percentage: ((currentPrice - buyPrice) / buyPrice) × 100
-- **Sample data** included with AAPL, GOOGL, and TSLA positions
+#### 📊 Advanced Analytics
+- **6 Chart Types**: Pie, Heatmap, Treemap, Performance, Sector, P&L
+- **Portfolio History**: Time-series tracking with 15+ metrics
+- **Performance Analysis**: Sharpe ratio, volatility, drawdown analysis
 
-### Modal Management
-- Single modal component for both add/edit operations
-- Form validation requires all fields to be filled
-- Uses controlled components with form state management
+#### 🎯 Goal Management
+- **7 Goal Types**: Retirement, house, education, emergency, vacation, investment, other
+- **Progress Tracking**: Real-time calculation and visualization
+- **Smart Analytics**: Completion estimates and monthly requirements
+
+#### 📰 News Integration
+- **Real-time News**: NewsAPI.org integration with sentiment analysis
+- **Portfolio-Specific**: Auto-filtered news for held stocks
+- **Smart Filtering**: Category, date, source, and relevance filtering
+
+#### 💹 Real-time Data
+- **Alpha Vantage API**: Live stock price updates
+- **Auto-refresh**: Configurable intervals with error handling
+- **Caching**: Optimized API usage with 30s cache duration
 
 ## Design System Compliance
 
-This project follows Spotify's Encore design system principles:
-- Dark-first theme with high contrast
-- Green accent color (#1DB954) for primary actions
-- Card-based layouts with rounded corners
-- Hover states and smooth transitions
-- Consistent spacing and typography scale
+**Modern Spotify-inspired design** with 2024/2025 trends:
+- **Glassmorphism**: Subtle backdrop blur effects and transparency
+- **Micro-interactions**: Smooth hover states and loading animations
+- **Compact Dense Layout**: Maximum information in minimal space
+- **Dark-first theme** with `#1DB954` accent color
+- **Typography**: Inter font with optimized hierarchy
 
-## Future Enhancement Areas
+## API Configuration
 
-Based on the PRD document, planned features include:
-- Real-time stock price API integration
-- Data persistence (localStorage or backend)
-- Advanced portfolio analytics
-- Mobile app development
-- Multi-portfolio support
+### Required Environment Variables
+```bash
+# Alpha Vantage (Stock Prices)
+REACT_APP_ALPHA_VANTAGE_API_KEY=your_key_here
+
+# News API (Market News)
+VITE_NEWS_API_KEY=your_key_here
+VITE_NEWS_API_BASE_URL=https://newsapi.org/v2
+```
+
+### API Sources
+- **Stock Data**: Alpha Vantage (free tier: 5 requests/minute)
+- **News Data**: NewsAPI.org (free tier: 500 requests/day)
+
+## Current Status: Phase 2 Complete ✅
+
+All major features implemented:
+- ✅ Real-time stock prices
+- ✅ Advanced charts (6 types)
+- ✅ Goal tracking system
+- ✅ Portfolio history
+- ✅ News integration
