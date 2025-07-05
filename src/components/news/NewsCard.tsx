@@ -1,5 +1,11 @@
 import React from 'react';
-import { ExternalLink, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import {
+  ExternalLink,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+} from 'lucide-react';
 import { NewsArticle } from '../../types/news';
 
 interface NewsCardProps {
@@ -9,19 +15,23 @@ interface NewsCardProps {
   onClick?: () => void;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ 
-  article, 
-  showStockTags = false, 
+const NewsCard: React.FC<NewsCardProps> = ({
+  article,
+  showStockTags = false,
   compact = false,
-  onClick 
+  onClick,
 }) => {
   const formatTimeAgo = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
     if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      const diffInMinutes = Math.floor(
+        (now.getTime() - date.getTime()) / (1000 * 60)
+      );
       return `${diffInMinutes}m ago`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;
@@ -68,7 +78,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
   if (compact) {
     return (
-      <div 
+      <div
         className={`bg-spotify-gray p-4 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer border-l-4 ${getSentimentColor(article.sentiment)}`}
         onClick={handleCardClick}
       >
@@ -94,11 +104,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
           </div>
           {article.urlToImage && (
             <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0">
-              <img 
-                src={article.urlToImage} 
+              <img
+                src={article.urlToImage}
                 alt={article.title}
                 className="w-full h-full object-cover"
-                onError={(e) => {
+                onError={e => {
                   const target = e.target as HTMLImageElement;
                   target.style.display = 'none';
                 }}
@@ -111,7 +121,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
   }
 
   return (
-    <div 
+    <div
       className={`bg-spotify-gray p-6 rounded-lg border border-gray-700 hover:border-gray-600 transition-all duration-200 cursor-pointer group border-l-4 ${getSentimentColor(article.sentiment)}`}
       onClick={handleCardClick}
     >
@@ -160,23 +170,23 @@ const NewsCard: React.FC<NewsCardProps> = ({
 
           {/* Tags and Author */}
           <div className="flex flex-wrap items-center gap-2">
-            {showStockTags && article.relatedStocks && article.relatedStocks.length > 0 && (
-              <div className="flex gap-1">
-                {article.relatedStocks.map((stock, index) => (
-                  <span 
-                    key={index}
-                    className="px-2 py-1 bg-spotify-green bg-opacity-20 text-spotify-green text-xs rounded-full font-medium"
-                  >
-                    {stock}
-                  </span>
-                ))}
-              </div>
-            )}
-            
+            {showStockTags &&
+              article.relatedStocks &&
+              article.relatedStocks.length > 0 && (
+                <div className="flex gap-1">
+                  {article.relatedStocks.map((stock, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-spotify-green bg-opacity-20 text-spotify-green text-xs rounded-full font-medium"
+                    >
+                      {stock}
+                    </span>
+                  ))}
+                </div>
+              )}
+
             {article.author && (
-              <span className="text-xs text-gray-500">
-                by {article.author}
-              </span>
+              <span className="text-xs text-gray-500">by {article.author}</span>
             )}
 
             {article.relevanceScore && article.relevanceScore > 70 && (
@@ -190,11 +200,11 @@ const NewsCard: React.FC<NewsCardProps> = ({
         {/* Image */}
         {article.urlToImage && (
           <div className="w-full sm:w-32 h-32 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
-            <img 
-              src={article.urlToImage} 
+            <img
+              src={article.urlToImage}
               alt={article.title}
               className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-              onError={(e) => {
+              onError={e => {
                 const target = e.target as HTMLImageElement;
                 target.parentElement?.remove();
               }}

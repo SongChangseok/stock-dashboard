@@ -41,11 +41,11 @@ export interface ExportData {
 }
 
 export interface PortfolioMetrics {
+  // Core metrics
   totalValue: number;
+  totalInvestment: number;
   totalProfitLoss: number;
   profitLossPercentage: number;
-  totalInvestment: number;
-  totalMarketValue: number;
   bestPerformer?: Stock;
   worstPerformer?: Stock;
   // Advanced analytics

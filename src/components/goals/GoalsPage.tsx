@@ -12,7 +12,7 @@ import EmptyState from '../common/EmptyState';
 const GoalsPage: React.FC = () => {
   const { state, addGoal, updateGoal, deleteGoal } = useGoals();
   const { goals, metrics, loading, error } = state;
-  
+
   const [showModal, setShowModal] = useState(false);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<GoalType | 'all'>('all');
@@ -42,7 +42,7 @@ const GoalsPage: React.FC = () => {
         targetAmount: parseFloat(formData.targetAmount),
         targetDate: formData.targetDate,
         monthlyContribution: parseFloat(formData.monthlyContribution),
-        category: formData.category
+        category: formData.category,
       });
     } else {
       addGoal({
@@ -54,15 +54,16 @@ const GoalsPage: React.FC = () => {
         targetDate: formData.targetDate,
         isActive: true,
         monthlyContribution: parseFloat(formData.monthlyContribution),
-        category: formData.category
+        category: formData.category,
       });
     }
     setShowModal(false);
   };
 
-  const filteredGoals = selectedType === 'all' 
-    ? goals 
-    : goals.filter(goal => goal.type === selectedType);
+  const filteredGoals =
+    selectedType === 'all'
+      ? goals
+      : goals.filter(goal => goal.type === selectedType);
 
   const goalTypeOptions = [
     { value: 'all', label: 'All Goals', icon: Target },
@@ -72,7 +73,7 @@ const GoalsPage: React.FC = () => {
     { value: GoalType.EMERGENCY, label: 'Emergency Fund', icon: Target },
     { value: GoalType.VACATION, label: 'Vacation', icon: Target },
     { value: GoalType.INVESTMENT, label: 'Investment', icon: TrendingUp },
-    { value: GoalType.OTHER, label: 'Other', icon: Target }
+    { value: GoalType.OTHER, label: 'Other', icon: Target },
   ];
 
   if (loading) {
@@ -91,8 +92,12 @@ const GoalsPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Financial Goals</h1>
-          <p className="text-gray-400">Track your progress towards your financial objectives</p>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Financial Goals
+          </h1>
+          <p className="text-gray-400">
+            Track your progress towards your financial objectives
+          </p>
         </div>
         <button
           onClick={handleAddGoal}
@@ -110,7 +115,9 @@ const GoalsPage: React.FC = () => {
             <h3 className="text-gray-400 font-medium">Total Goals</h3>
             <Target className="text-spotify-green" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{metrics.totalGoals}</div>
+          <div className="text-2xl font-bold text-white">
+            {metrics.totalGoals}
+          </div>
         </div>
 
         <div className="bg-spotify-gray p-6 rounded-lg border border-gray-700">
@@ -118,7 +125,9 @@ const GoalsPage: React.FC = () => {
             <h3 className="text-gray-400 font-medium">Active Goals</h3>
             <TrendingUp className="text-blue-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{metrics.activeGoals}</div>
+          <div className="text-2xl font-bold text-white">
+            {metrics.activeGoals}
+          </div>
         </div>
 
         <div className="bg-spotify-gray p-6 rounded-lg border border-gray-700">
@@ -126,7 +135,9 @@ const GoalsPage: React.FC = () => {
             <h3 className="text-gray-400 font-medium">Target Amount</h3>
             <DollarSign className="text-yellow-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{formatCurrency(metrics.totalTargetAmount)}</div>
+          <div className="text-2xl font-bold text-white">
+            {formatCurrency(metrics.totalTargetAmount)}
+          </div>
         </div>
 
         <div className="bg-spotify-gray p-6 rounded-lg border border-gray-700">
@@ -134,7 +145,9 @@ const GoalsPage: React.FC = () => {
             <h3 className="text-gray-400 font-medium">Overall Progress</h3>
             <Calendar className="text-purple-400" size={24} />
           </div>
-          <div className="text-2xl font-bold text-white">{metrics.overallProgress.toFixed(1)}%</div>
+          <div className="text-2xl font-bold text-white">
+            {metrics.overallProgress.toFixed(1)}%
+          </div>
         </div>
       </div>
 
@@ -174,7 +187,7 @@ const GoalsPage: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredGoals.map((goal) => (
+          {filteredGoals.map(goal => (
             <GoalCard
               key={goal.id}
               goal={goal}
@@ -188,7 +201,9 @@ const GoalsPage: React.FC = () => {
       {/* Progress Chart */}
       {goals.length > 0 && (
         <div className="bg-spotify-gray p-6 rounded-lg border border-gray-700">
-          <h3 className="text-xl font-bold text-white mb-6">Goals Progress Overview</h3>
+          <h3 className="text-xl font-bold text-white mb-6">
+            Goals Progress Overview
+          </h3>
           <GoalProgressChart goals={goals} />
         </div>
       )}
@@ -200,7 +215,9 @@ const GoalsPage: React.FC = () => {
         title={editingGoalId ? 'Edit Goal' : 'Add New Goal'}
       >
         <GoalForm
-          goal={editingGoalId ? goals.find(g => g.id === editingGoalId) : undefined}
+          goal={
+            editingGoalId ? goals.find(g => g.id === editingGoalId) : undefined
+          }
           onSubmit={handleSubmitGoal}
           onCancel={() => setShowModal(false)}
         />

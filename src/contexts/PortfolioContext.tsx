@@ -1,5 +1,16 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
-import { Stock, StockFormData, PortfolioMetrics, ExportData } from '../types/portfolio';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+  useEffect,
+} from 'react';
+import {
+  Stock,
+  StockFormData,
+  PortfolioMetrics,
+  ExportData,
+} from '../types/portfolio';
 import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
 import { saveToLocalStorage, loadFromLocalStorage } from '../utils/portfolio';
 import { validatePortfolioData } from '../utils/validation';
@@ -39,16 +50,33 @@ interface PortfolioContextType {
 // Initial state
 const initialState: PortfolioState = {
   stocks: [
-    { id: 1, ticker: 'AAPL', buyPrice: 150.00, currentPrice: 185.50, quantity: 10 },
-    { id: 2, ticker: 'GOOGL', buyPrice: 2500.00, currentPrice: 2650.00, quantity: 5 },
-    { id: 3, ticker: 'TSLA', buyPrice: 800.00, currentPrice: 750.00, quantity: 8 },
+    {
+      id: 1,
+      ticker: 'AAPL',
+      buyPrice: 150.0,
+      currentPrice: 185.5,
+      quantity: 10,
+    },
+    {
+      id: 2,
+      ticker: 'GOOGL',
+      buyPrice: 2500.0,
+      currentPrice: 2650.0,
+      quantity: 5,
+    },
+    {
+      id: 3,
+      ticker: 'TSLA',
+      buyPrice: 800.0,
+      currentPrice: 750.0,
+      quantity: 8,
+    },
   ],
   metrics: {
     totalValue: 0,
+    totalInvestment: 0,
     totalProfitLoss: 0,
     profitLossPercentage: 0,
-    totalInvestment: 0,
-    totalMarketValue: 0,
   },
   loading: false,
   error: null,
@@ -60,7 +88,10 @@ const updateMetrics = (stocks: Stock[]): PortfolioMetrics => {
 };
 
 // Reducer
-const portfolioReducer = (state: PortfolioState, action: PortfolioAction): PortfolioState => {
+const portfolioReducer = (
+  state: PortfolioState,
+  action: PortfolioAction
+): PortfolioState => {
   switch (action.type) {
     case 'ADD_STOCK': {
       const newStocks = [...state.stocks, action.payload];
@@ -81,7 +112,9 @@ const portfolioReducer = (state: PortfolioState, action: PortfolioAction): Portf
       };
     }
     case 'DELETE_STOCK': {
-      const newStocks = state.stocks.filter(stock => stock.id !== action.payload);
+      const newStocks = state.stocks.filter(
+        stock => stock.id !== action.payload
+      );
       return {
         ...state,
         stocks: newStocks,
@@ -117,10 +150,14 @@ const portfolioReducer = (state: PortfolioState, action: PortfolioAction): Portf
 };
 
 // Create context
-const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
+const PortfolioContext = createContext<PortfolioContextType | undefined>(
+  undefined
+);
 
 // Provider component
-export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(portfolioReducer, initialState);
   const { addToast } = useToast();
 
@@ -141,142 +178,164 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         dispatch({ type: 'SET_STOCKS', payload: state.stocks });
       }
     };
-    
+
     loadInitialData();
   }, []); // Empty dependency array to run only once on mount
 
   // Add stock
-  const addStock = useCallback((formData: StockFormData) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      const newStock: Stock = {
-        id: Date.now(),
-        ticker: formData.ticker.toUpperCase(),
-        buyPrice: parseFloat(formData.buyPrice),
-        currentPrice: parseFloat(formData.currentPrice),
-        quantity: parseInt(formData.quantity),
-        lastUpdated: new Date(),
-      };
+  const addStock = useCallback(
+    (formData: StockFormData) => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
 
-      // Validate the new stock
-      if (!newStock.ticker || newStock.buyPrice <= 0 || newStock.currentPrice <= 0 || newStock.quantity <= 0) {
-        throw new Error('Invalid stock data');
-      }
+        const newStock: Stock = {
+          id: Date.now(),
+          ticker: formData.ticker.toUpperCase(),
+          buyPrice: parseFloat(formData.buyPrice),
+          currentPrice: parseFloat(formData.currentPrice),
+          quantity: parseInt(formData.quantity),
+          lastUpdated: new Date(),
+        };
 
-      dispatch({ type: 'ADD_STOCK', payload: newStock });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      
-      addToast({
-        type: 'success',
-        title: 'Stock Added',
-        message: `${newStock.ticker} has been added to your portfolio.`
-      });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
-      addToast({
-        type: 'error',
-        title: 'Add Stock Failed',
-        message: (error as Error).message
-      });
-    }
-  }, [addToast]);
+        // Validate the new stock
+        if (
+          !newStock.ticker ||
+          newStock.buyPrice <= 0 ||
+          newStock.currentPrice <= 0 ||
+          newStock.quantity <= 0
+        ) {
+          throw new Error('Invalid stock data');
+        }
 
-  // Update stock
-  const updateStock = useCallback((id: number, formData: StockFormData) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      const updatedStock: Stock = {
-        id,
-        ticker: formData.ticker.toUpperCase(),
-        buyPrice: parseFloat(formData.buyPrice),
-        currentPrice: parseFloat(formData.currentPrice),
-        quantity: parseInt(formData.quantity),
-        lastUpdated: new Date(),
-      };
+        dispatch({ type: 'ADD_STOCK', payload: newStock });
+        dispatch({ type: 'SET_LOADING', payload: false });
 
-      // Validate the updated stock
-      if (!updatedStock.ticker || updatedStock.buyPrice <= 0 || updatedStock.currentPrice <= 0 || updatedStock.quantity <= 0) {
-        throw new Error('Invalid stock data');
-      }
-
-      dispatch({ type: 'UPDATE_STOCK', payload: updatedStock });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      
-      addToast({
-        type: 'success',
-        title: 'Stock Updated',
-        message: `${updatedStock.ticker} has been updated successfully.`
-      });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
-      addToast({
-        type: 'error',
-        title: 'Update Stock Failed',
-        message: (error as Error).message
-      });
-    }
-  }, [addToast]);
-
-  // Delete stock
-  const deleteStock = useCallback((id: number) => {
-    try {
-      const stock = state.stocks.find(s => s.id === id);
-      dispatch({ type: 'DELETE_STOCK', payload: id });
-      
-      if (stock) {
         addToast({
           type: 'success',
-          title: 'Stock Removed',
-          message: `${stock.ticker} has been removed from your portfolio.`
+          title: 'Stock Added',
+          message: `${newStock.ticker} has been added to your portfolio.`,
+        });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+        addToast({
+          type: 'error',
+          title: 'Add Stock Failed',
+          message: (error as Error).message,
         });
       }
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
-    }
-  }, [state.stocks, addToast]);
+    },
+    [addToast]
+  );
+
+  // Update stock
+  const updateStock = useCallback(
+    (id: number, formData: StockFormData) => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+
+        const updatedStock: Stock = {
+          id,
+          ticker: formData.ticker.toUpperCase(),
+          buyPrice: parseFloat(formData.buyPrice),
+          currentPrice: parseFloat(formData.currentPrice),
+          quantity: parseInt(formData.quantity),
+          lastUpdated: new Date(),
+        };
+
+        // Validate the updated stock
+        if (
+          !updatedStock.ticker ||
+          updatedStock.buyPrice <= 0 ||
+          updatedStock.currentPrice <= 0 ||
+          updatedStock.quantity <= 0
+        ) {
+          throw new Error('Invalid stock data');
+        }
+
+        dispatch({ type: 'UPDATE_STOCK', payload: updatedStock });
+        dispatch({ type: 'SET_LOADING', payload: false });
+
+        addToast({
+          type: 'success',
+          title: 'Stock Updated',
+          message: `${updatedStock.ticker} has been updated successfully.`,
+        });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+        addToast({
+          type: 'error',
+          title: 'Update Stock Failed',
+          message: (error as Error).message,
+        });
+      }
+    },
+    [addToast]
+  );
+
+  // Delete stock
+  const deleteStock = useCallback(
+    (id: number) => {
+      try {
+        const stock = state.stocks.find(s => s.id === id);
+        dispatch({ type: 'DELETE_STOCK', payload: id });
+
+        if (stock) {
+          addToast({
+            type: 'success',
+            title: 'Stock Removed',
+            message: `${stock.ticker} has been removed from your portfolio.`,
+          });
+        }
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      }
+    },
+    [state.stocks, addToast]
+  );
 
   // Import stocks
-  const importStocks = useCallback((data: ExportData) => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      
-      if (!validatePortfolioData(data)) {
-        throw new Error('Invalid portfolio data format');
+  const importStocks = useCallback(
+    (data: ExportData) => {
+      try {
+        dispatch({ type: 'SET_LOADING', payload: true });
+
+        if (!validatePortfolioData(data)) {
+          throw new Error('Invalid portfolio data format');
+        }
+
+        const importedStocks: Stock[] = data.stocks.map((stock, index) => ({
+          id: Date.now() + index,
+          ticker: stock.ticker.toUpperCase(),
+          buyPrice: stock.buyPrice,
+          currentPrice: stock.currentPrice,
+          quantity: stock.quantity,
+          lastUpdated: new Date(),
+        }));
+
+        dispatch({ type: 'SET_STOCKS', payload: importedStocks });
+        dispatch({ type: 'SET_LOADING', payload: false });
+
+        addToast({
+          type: 'success',
+          title: 'Data Imported',
+          message: `Successfully imported ${importedStocks.length} stocks.`,
+        });
+      } catch (error) {
+        dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+        addToast({
+          type: 'error',
+          title: 'Import Failed',
+          message: (error as Error).message,
+        });
       }
-
-      const importedStocks: Stock[] = data.stocks.map((stock, index) => ({
-        id: Date.now() + index,
-        ticker: stock.ticker.toUpperCase(),
-        buyPrice: stock.buyPrice,
-        currentPrice: stock.currentPrice,
-        quantity: stock.quantity,
-        lastUpdated: new Date(),
-      }));
-
-      dispatch({ type: 'SET_STOCKS', payload: importedStocks });
-      dispatch({ type: 'SET_LOADING', payload: false });
-      
-      addToast({
-        type: 'success',
-        title: 'Data Imported',
-        message: `Successfully imported ${importedStocks.length} stocks.`
-      });
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
-      addToast({
-        type: 'error',
-        title: 'Import Failed',
-        message: (error as Error).message
-      });
-    }
-  }, [addToast]);
+    },
+    [addToast]
+  );
 
   // Export stocks
   const exportStocks = useCallback((): ExportData => {
     return {
-      version: "1.0",
+      version: '1.0',
       exportDate: new Date().toISOString(),
       metadata: {
         totalValue: state.metrics.totalValue,
@@ -300,7 +359,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         dispatch({ type: 'SET_STOCKS', payload: savedData });
       }
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to load data from storage' });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: 'Failed to load data from storage',
+      });
     }
   }, []);
 
@@ -309,7 +371,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       saveToLocalStorage('portfolio-stocks', state.stocks);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to save data to storage' });
+      dispatch({
+        type: 'SET_ERROR',
+        payload: 'Failed to save data to storage',
+      });
     }
   }, [state.stocks]);
 

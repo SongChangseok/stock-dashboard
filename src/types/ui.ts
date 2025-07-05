@@ -174,7 +174,19 @@ export interface ModalProps extends BaseComponentProps {
 
 export interface TooltipProps extends BaseComponentProps {
   content: React.ReactNode;
-  placement?: 'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end' | 'right-start' | 'right-end';
+  placement?:
+    | 'top'
+    | 'bottom'
+    | 'left'
+    | 'right'
+    | 'top-start'
+    | 'top-end'
+    | 'bottom-start'
+    | 'bottom-end'
+    | 'left-start'
+    | 'left-end'
+    | 'right-start'
+    | 'right-end';
   trigger?: 'hover' | 'focus' | 'click' | 'manual';
   visible?: boolean;
   defaultVisible?: boolean;
@@ -193,7 +205,10 @@ export interface TableProps<T = any> extends BaseComponentProps {
   pagination?: PaginationConfig | false;
   sortConfig?: SortConfig;
   onSort?: (sortConfig: SortConfig) => void;
-  onRow?: (record: T, index: number) => React.HTMLAttributes<HTMLTableRowElement>;
+  onRow?: (
+    record: T,
+    index: number
+  ) => React.HTMLAttributes<HTMLTableRowElement>;
   rowKey?: keyof T | ((record: T) => string);
   expandable?: {
     expandedRowKeys?: string[];

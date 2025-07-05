@@ -1,16 +1,16 @@
 // Advanced portfolio analytics for detailed analysis
 // Provides comprehensive analytics including performance, risk, diversification, and sector analysis
 
-import { 
-  Stock, 
-  PortfolioAnalytics, 
-  PerformanceMetrics, 
-  RiskMetrics, 
-  DiversificationMetrics, 
+import {
+  Stock,
+  PortfolioAnalytics,
+  PerformanceMetrics,
+  RiskMetrics,
+  DiversificationMetrics,
   SectorAnalysis,
   SectorAllocation,
   SectorPerformance,
-  SectorRisk
+  SectorRisk,
 } from '../types/portfolio';
 
 import {
@@ -19,33 +19,35 @@ import {
   calculateTotalProfitLoss,
   calculateStockReturnPercent,
   categorizeStocksByPerformance,
-  calculatePortfolioWeights
+  calculatePortfolioWeights,
 } from './portfolioCore';
 
 // Mock sector mapping for demonstration
 const SECTOR_MAPPING: Record<string, string> = {
-  'AAPL': 'Technology',
-  'GOOGL': 'Technology',
-  'MSFT': 'Technology',
-  'AMZN': 'Consumer Discretionary',
-  'TSLA': 'Consumer Discretionary',
-  'NFLX': 'Consumer Discretionary',
-  'JPM': 'Financial Services',
-  'BAC': 'Financial Services',
-  'GS': 'Financial Services',
-  'JNJ': 'Healthcare',
-  'PFE': 'Healthcare',
-  'UNH': 'Healthcare',
-  'XOM': 'Energy',
-  'CVX': 'Energy',
-  'COP': 'Energy',
-  'PG': 'Consumer Staples',
-  'KO': 'Consumer Staples',
-  'WMT': 'Consumer Staples',
+  AAPL: 'Technology',
+  GOOGL: 'Technology',
+  MSFT: 'Technology',
+  AMZN: 'Consumer Discretionary',
+  TSLA: 'Consumer Discretionary',
+  NFLX: 'Consumer Discretionary',
+  JPM: 'Financial Services',
+  BAC: 'Financial Services',
+  GS: 'Financial Services',
+  JNJ: 'Healthcare',
+  PFE: 'Healthcare',
+  UNH: 'Healthcare',
+  XOM: 'Energy',
+  CVX: 'Energy',
+  COP: 'Energy',
+  PG: 'Consumer Staples',
+  KO: 'Consumer Staples',
+  WMT: 'Consumer Staples',
 };
 
 // Performance Metrics Calculations
-export const calculatePerformanceMetrics = (stocks: Stock[]): PerformanceMetrics => {
+export const calculatePerformanceMetrics = (
+  stocks: Stock[]
+): PerformanceMetrics => {
   if (stocks.length === 0) {
     return {
       totalReturn: 0,
@@ -61,16 +63,18 @@ export const calculatePerformanceMetrics = (stocks: Stock[]): PerformanceMetrics
 
   const totalInvestment = calculateTotalInvestment(stocks);
   const totalReturn = calculateTotalProfitLoss(stocks);
-  const totalReturnPercent = totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
+  const totalReturnPercent =
+    totalInvestment > 0 ? (totalReturn / totalInvestment) * 100 : 0;
 
   // Use shared performance categorization
-  const { stockPerformances, winLossRatio, averageGain, averageLoss } = categorizeStocksByPerformance(stocks);
+  const { stockPerformances, winLossRatio, averageGain, averageLoss } =
+    categorizeStocksByPerformance(stocks);
 
-  const bestPerforming = stockPerformances.reduce((best, current) => 
+  const bestPerforming = stockPerformances.reduce((best, current) =>
     current.returnPercent > best.returnPercent ? current : best
   );
-  
-  const worstPerforming = stockPerformances.reduce((worst, current) => 
+
+  const worstPerforming = stockPerformances.reduce((worst, current) =>
     current.returnPercent < worst.returnPercent ? current : worst
   );
 
@@ -106,11 +110,14 @@ export const calculateRiskMetrics = (stocks: Stock[]): RiskMetrics => {
 
   // Calculate portfolio volatility (standard deviation of returns)
   const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const variance = returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / returns.length;
+  const variance =
+    returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) /
+    returns.length;
   const portfolioVolatility = Math.sqrt(variance);
 
   // Simplified Sharpe ratio calculation (assuming risk-free rate = 0)
-  const sharpeRatio = portfolioVolatility > 0 ? meanReturn / portfolioVolatility : 0;
+  const sharpeRatio =
+    portfolioVolatility > 0 ? meanReturn / portfolioVolatility : 0;
 
   // Simplified calculations for demonstration
   const maxDrawdown = Math.min(...returns.map(r => Math.min(0, r)));
@@ -129,7 +136,9 @@ export const calculateRiskMetrics = (stocks: Stock[]): RiskMetrics => {
 };
 
 // Diversification Metrics Calculations
-export const calculateDiversificationMetrics = (stocks: Stock[]): DiversificationMetrics => {
+export const calculateDiversificationMetrics = (
+  stocks: Stock[]
+): DiversificationMetrics => {
   if (stocks.length === 0) {
     return {
       concentrationRisk: 0,
@@ -143,7 +152,10 @@ export const calculateDiversificationMetrics = (stocks: Stock[]): Diversificatio
   const weights = calculatePortfolioWeights(stocks);
 
   // Herfindahl Index (concentration measure)
-  const herfindahlIndex = weights.reduce((sum, weight) => sum + Math.pow(weight, 2), 0);
+  const herfindahlIndex = weights.reduce(
+    (sum, weight) => sum + Math.pow(weight, 2),
+    0
+  );
 
   // Concentration risk (percentage of portfolio in top position)
   const concentrationRisk = Math.max(...weights) * 100;
@@ -152,11 +164,12 @@ export const calculateDiversificationMetrics = (stocks: Stock[]): Diversificatio
   const effectiveNumberOfStocks = herfindahlIndex > 0 ? 1 / herfindahlIndex : 0;
 
   // Simplified diversification ratio
-  const diversificationRatio = stocks.length > 1 ? (1 - herfindahlIndex) / (1 - 1/stocks.length) : 0;
+  const diversificationRatio =
+    stocks.length > 1 ? (1 - herfindahlIndex) / (1 - 1 / stocks.length) : 0;
 
   // Simplified correlation matrix (for demonstration)
-  const correlationMatrix = stocks.map(() => 
-    stocks.map(() => Math.random() * 0.6 + 0.2) // Random correlations between 0.2 and 0.8
+  const correlationMatrix = stocks.map(
+    () => stocks.map(() => Math.random() * 0.6 + 0.2) // Random correlations between 0.2 and 0.8
   );
 
   return {
@@ -181,31 +194,39 @@ export const calculateSectorAnalysis = (stocks: Stock[]): SectorAnalysis => {
   const totalValue = calculateTotalValue(stocks);
 
   // Group stocks by sector
-  const sectorGroups = stocks.reduce((groups, stock) => {
-    const sector = stock.sector || SECTOR_MAPPING[stock.ticker] || 'Unknown';
-    if (!groups[sector]) {
-      groups[sector] = [];
-    }
-    groups[sector].push(stock);
-    return groups;
-  }, {} as Record<string, Stock[]>);
+  const sectorGroups = stocks.reduce(
+    (groups, stock) => {
+      const sector = stock.sector || SECTOR_MAPPING[stock.ticker] || 'Unknown';
+      if (!groups[sector]) {
+        groups[sector] = [];
+      }
+      groups[sector].push(stock);
+      return groups;
+    },
+    {} as Record<string, Stock[]>
+  );
 
   // Calculate sector allocations
-  const sectorAllocation: SectorAllocation[] = Object.entries(sectorGroups).map(([sector, stocks]) => {
-    const sectorValue = calculateTotalValue(stocks);
-    return {
-      sector,
-      allocation: (sectorValue / totalValue) * 100,
-      value: sectorValue,
-    };
-  });
+  const sectorAllocation: SectorAllocation[] = Object.entries(sectorGroups).map(
+    ([sector, stocks]) => {
+      const sectorValue = calculateTotalValue(stocks);
+      return {
+        sector,
+        allocation: (sectorValue / totalValue) * 100,
+        value: sectorValue,
+      };
+    }
+  );
 
   // Calculate sector performance
-  const sectorPerformance: SectorPerformance[] = Object.entries(sectorGroups).map(([sector, stocks]) => {
+  const sectorPerformance: SectorPerformance[] = Object.entries(
+    sectorGroups
+  ).map(([sector, stocks]) => {
     const sectorInvestment = calculateTotalInvestment(stocks);
     const sectorMarketValue = calculateTotalValue(stocks);
     const sectorReturn = sectorMarketValue - sectorInvestment;
-    const sectorReturnPercent = sectorInvestment > 0 ? (sectorReturn / sectorInvestment) * 100 : 0;
+    const sectorReturnPercent =
+      sectorInvestment > 0 ? (sectorReturn / sectorInvestment) * 100 : 0;
 
     return {
       sector,
@@ -215,18 +236,23 @@ export const calculateSectorAnalysis = (stocks: Stock[]): SectorAnalysis => {
   });
 
   // Calculate sector risk
-  const sectorRisk: SectorRisk[] = Object.entries(sectorGroups).map(([sector, stocks]) => {
-    const returns = stocks.map(stock => calculateStockReturnPercent(stock));
-    const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const variance = returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / returns.length;
-    const volatility = Math.sqrt(variance);
+  const sectorRisk: SectorRisk[] = Object.entries(sectorGroups).map(
+    ([sector, stocks]) => {
+      const returns = stocks.map(stock => calculateStockReturnPercent(stock));
+      const meanReturn =
+        returns.reduce((sum, r) => sum + r, 0) / returns.length;
+      const variance =
+        returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) /
+        returns.length;
+      const volatility = Math.sqrt(variance);
 
-    return {
-      sector,
-      volatility,
-      beta: 1.0, // Simplified beta assumption
-    };
-  });
+      return {
+        sector,
+        volatility,
+        beta: 1.0, // Simplified beta assumption
+      };
+    }
+  );
 
   return {
     sectorAllocation,
@@ -236,7 +262,9 @@ export const calculateSectorAnalysis = (stocks: Stock[]): SectorAnalysis => {
 };
 
 // Main analytics function
-export const calculatePortfolioAnalytics = (stocks: Stock[]): PortfolioAnalytics => {
+export const calculatePortfolioAnalytics = (
+  stocks: Stock[]
+): PortfolioAnalytics => {
   return {
     performanceMetrics: calculatePerformanceMetrics(stocks),
     riskMetrics: calculateRiskMetrics(stocks),
@@ -246,7 +274,10 @@ export const calculatePortfolioAnalytics = (stocks: Stock[]): PortfolioAnalytics
 };
 
 // Utility functions for analytics
-export const getTopPerformers = (stocks: Stock[], count: number = 3): Stock[] => {
+export const getTopPerformers = (
+  stocks: Stock[],
+  count: number = 3
+): Stock[] => {
   return stocks
     .map(stock => ({
       stock,
@@ -257,7 +288,10 @@ export const getTopPerformers = (stocks: Stock[], count: number = 3): Stock[] =>
     .map(item => item.stock);
 };
 
-export const getBottomPerformers = (stocks: Stock[], count: number = 3): Stock[] => {
+export const getBottomPerformers = (
+  stocks: Stock[],
+  count: number = 3
+): Stock[] => {
   return stocks
     .map(stock => ({
       stock,
@@ -268,9 +302,12 @@ export const getBottomPerformers = (stocks: Stock[], count: number = 3): Stock[]
     .map(item => item.stock);
 };
 
-export const getHighestWeightedStocks = (stocks: Stock[], count: number = 5): Stock[] => {
+export const getHighestWeightedStocks = (
+  stocks: Stock[],
+  count: number = 5
+): Stock[] => {
   const totalValue = calculateTotalValue(stocks);
-  
+
   return stocks
     .map(stock => ({
       stock,
@@ -293,6 +330,12 @@ export const calculatePortfolioSummary = (stocks: Stock[]) => {
     bottomPerformers,
     highestWeighted,
     totalStocks: stocks.length,
-    totalSectors: Array.from(new Set(stocks.map(stock => stock.sector || SECTOR_MAPPING[stock.ticker] || 'Unknown'))).length,
+    totalSectors: Array.from(
+      new Set(
+        stocks.map(
+          stock => stock.sector || SECTOR_MAPPING[stock.ticker] || 'Unknown'
+        )
+      )
+    ).length,
   };
 };

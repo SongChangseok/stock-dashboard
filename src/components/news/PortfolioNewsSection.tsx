@@ -11,9 +11,9 @@ interface PortfolioNewsSectionProps {
   compact?: boolean;
 }
 
-const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({ 
-  maxArticles = 6, 
-  compact = true 
+const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
+  maxArticles = 6,
+  compact = true,
 }) => {
   const { state: portfolioState } = usePortfolio();
   const { articles, loading, error, fetchStockNews } = useStockNews();
@@ -25,9 +25,11 @@ const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
 
   // Filter articles for portfolio stocks
   const portfolioArticles = articles
-    .filter(article => 
-      !selectedStock || 
-      (article.relatedStocks && article.relatedStocks.includes(selectedStock.toUpperCase()))
+    .filter(
+      article =>
+        !selectedStock ||
+        (article.relatedStocks &&
+          article.relatedStocks.includes(selectedStock.toUpperCase()))
     )
     .slice(0, maxArticles);
 
@@ -62,7 +64,9 @@ const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
         <div className="text-center py-8">
           <Newspaper className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-400 mb-2">No stocks in portfolio</p>
-          <p className="text-sm text-gray-500">Add stocks to see related news</p>
+          <p className="text-sm text-gray-500">
+            Add stocks to see related news
+          </p>
         </div>
       </div>
     );
@@ -101,7 +105,7 @@ const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
           >
             All Stocks
           </button>
-          {portfolioTickers.map((ticker) => (
+          {portfolioTickers.map(ticker => (
             <button
               key={ticker}
               onClick={() => handleStockSelect(ticker)}
@@ -132,15 +136,15 @@ const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
       {/* Articles */}
       {portfolioArticles.length > 0 ? (
         <div className="space-y-3">
-          {portfolioArticles.map((article) => (
-            <NewsCard 
-              key={article.id} 
-              article={article} 
+          {portfolioArticles.map(article => (
+            <NewsCard
+              key={article.id}
+              article={article}
               compact={compact}
               showStockTags={true}
             />
           ))}
-          
+
           {/* View More Link */}
           {portfolioArticles.length >= maxArticles && (
             <div className="text-center pt-4">
@@ -154,20 +158,27 @@ const PortfolioNewsSection: React.FC<PortfolioNewsSectionProps> = ({
             </div>
           )}
         </div>
-      ) : !loading && !loadingStockNews && (
-        <div className="text-center py-8">
-          <Newspaper className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-400 mb-2">
-            {selectedStock ? `No news found for ${selectedStock}` : 'No recent news available'}
-          </p>
-          <p className="text-sm text-gray-500">Try checking back later or view all news</p>
-          <Link
-            to="/news"
-            className="inline-block mt-3 bg-spotify-green hover:bg-spotify-green-hover text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Browse All News
-          </Link>
-        </div>
+      ) : (
+        !loading &&
+        !loadingStockNews && (
+          <div className="text-center py-8">
+            <Newspaper className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-400 mb-2">
+              {selectedStock
+                ? `No news found for ${selectedStock}`
+                : 'No recent news available'}
+            </p>
+            <p className="text-sm text-gray-500">
+              Try checking back later or view all news
+            </p>
+            <Link
+              to="/news"
+              className="inline-block mt-3 bg-spotify-green hover:bg-spotify-green-hover text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Browse All News
+            </Link>
+          </div>
+        )
       )}
     </div>
   );

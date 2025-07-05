@@ -1,6 +1,11 @@
 // 실시간 주식 가격 관리 컨텍스트
 
-import React, { createContext, useContext, useCallback, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+} from 'react';
 import { StockQuote } from '../types/api';
 import { useMultipleStockPrices } from '../hooks/useStockPrice';
 import { usePortfolio } from './PortfolioContext';
@@ -19,7 +24,9 @@ interface StockPriceContextType {
   toggleRealTime: () => void;
 }
 
-const StockPriceContext = createContext<StockPriceContextType | undefined>(undefined);
+const StockPriceContext = createContext<StockPriceContextType | undefined>(
+  undefined
+);
 
 export const useStockPrices = (): StockPriceContextType => {
   const context = useContext(StockPriceContext);
@@ -39,10 +46,10 @@ export const StockPriceProvider: React.FC<StockPriceProviderProps> = ({
   const { state } = usePortfolio();
   const { info } = useToast();
   const { settings, updateSetting } = useSettings();
-  
+
   // 포트폴리오의 모든 주식 티커 추출
   const tickers = state.stocks.map(stock => stock.ticker);
-  
+
   // 여러 주식 가격 동시 관리
   const {
     data: stockPrices,
@@ -71,11 +78,17 @@ export const StockPriceProvider: React.FC<StockPriceProviderProps> = ({
   const toggleRealTime = useCallback(() => {
     const newValue = !settings.realTimePriceUpdates;
     updateSetting('realTimePriceUpdates', newValue);
-    
+
     if (newValue) {
-      info('Real-time Updates Enabled', 'Stock prices will update automatically.');
+      info(
+        'Real-time Updates Enabled',
+        'Stock prices will update automatically.'
+      );
     } else {
-      info('Real-time Updates Disabled', 'Stock prices will not update automatically.');
+      info(
+        'Real-time Updates Disabled',
+        'Stock prices will not update automatically.'
+      );
     }
   }, [settings.realTimePriceUpdates, updateSetting, info]);
 
@@ -90,19 +103,24 @@ export const StockPriceProvider: React.FC<StockPriceProviderProps> = ({
   }, [refetch, info]);
 
   // 특정 주식 가격 조회 함수
-  const getStockPrice = useCallback((ticker: string): StockQuote | undefined => {
-    return stockPrices.get(ticker.toUpperCase());
-  }, [stockPrices]);
+  const getStockPrice = useCallback(
+    (ticker: string): StockQuote | undefined => {
+      return stockPrices.get(ticker.toUpperCase());
+    },
+    [stockPrices]
+  );
 
   // 에러 알림 (과도한 알림 방지를 위해 제한적으로 표시)
   useEffect(() => {
     if (errors.size > 0) {
       const errorCount = errors.size;
       const totalStocks = tickers.length;
-      
+
       // 50% 이상 실패 시에만 알림
       if (errorCount / totalStocks >= 0.5) {
-        console.warn(`Failed to fetch prices for ${errorCount} out of ${totalStocks} stocks`);
+        console.warn(
+          `Failed to fetch prices for ${errorCount} out of ${totalStocks} stocks`
+        );
       }
     }
   }, [errors, tickers.length]);

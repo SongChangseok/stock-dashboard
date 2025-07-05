@@ -63,10 +63,15 @@ export interface PortfolioHistoryState {
 export interface PortfolioHistoryContextType {
   state: PortfolioHistoryState;
   takeSnapshot: (portfolioData: any) => Promise<void>;
-  getSnapshotsByDateRange: (startDate: string, endDate: string) => PortfolioSnapshot[];
+  getSnapshotsByDateRange: (
+    startDate: string,
+    endDate: string
+  ) => PortfolioSnapshot[];
   calculateMetrics: (snapshots: PortfolioSnapshot[]) => PerformanceMetrics;
   calculateDrawdowns: (snapshots: PortfolioSnapshot[]) => DrawdownPeriod[];
-  getPerformanceForPeriod: (period: '1d' | '1w' | '1m' | '3m' | '6m' | '1y' | 'all') => PortfolioSnapshot[];
+  getPerformanceForPeriod: (
+    period: '1d' | '1w' | '1m' | '3m' | '6m' | '1y' | 'all'
+  ) => PortfolioSnapshot[];
   clearHistory: () => void;
   setError: (error: string | null) => void;
 }

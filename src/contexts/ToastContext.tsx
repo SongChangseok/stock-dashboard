@@ -21,13 +21,15 @@ export const useToast = (): ToastContextType => {
   return context;
 };
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
     const id = `toast-${Date.now()}-${Math.random()}`;
     const newToast: ToastMessage = { ...toast, id };
-    
+
     setToasts(prev => [...prev, newToast]);
   }, []);
 
@@ -36,36 +38,47 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   // Convenience methods
-  const success = useCallback((title: string, message?: string) => {
-    addToast({ type: 'success', title, message: message || '' });
-  }, [addToast]);
+  const success = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: 'success', title, message: message || '' });
+    },
+    [addToast]
+  );
 
-  const error = useCallback((title: string, message?: string) => {
-    addToast({ type: 'error', title, message: message || '' });
-  }, [addToast]);
+  const error = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: 'error', title, message: message || '' });
+    },
+    [addToast]
+  );
 
-  const warning = useCallback((title: string, message?: string) => {
-    addToast({ type: 'warning', title, message: message || '' });
-  }, [addToast]);
+  const warning = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: 'warning', title, message: message || '' });
+    },
+    [addToast]
+  );
 
-  const info = useCallback((title: string, message?: string) => {
-    addToast({ type: 'info', title, message: message || '' });
-  }, [addToast]);
+  const info = useCallback(
+    (title: string, message?: string) => {
+      addToast({ type: 'info', title, message: message || '' });
+    },
+    [addToast]
+  );
 
   return (
-    <ToastContext.Provider value={{ 
-      addToast, 
-      removeToast, 
-      success, 
-      error, 
-      warning, 
-      info 
-    }}>
+    <ToastContext.Provider
+      value={{
+        addToast,
+        removeToast,
+        success,
+        error,
+        warning,
+        info,
+      }}
+    >
       {children}
-      <ToastContainer
-        toasts={toasts}
-        onRemoveToast={removeToast}
-      />
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </ToastContext.Provider>
   );
 };

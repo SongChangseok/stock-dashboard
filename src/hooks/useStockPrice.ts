@@ -1,7 +1,11 @@
 // 실시간 주식 가격 조회 커스텀 훅
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { StockQuote, StockPriceHookReturn, StockPriceHookOptions } from '../types/api';
+import {
+  StockQuote,
+  StockPriceHookReturn,
+  StockPriceHookOptions,
+} from '../types/api';
 import { stockApiService } from '../services/stockApiService';
 import { useToast } from '../contexts/ToastContext';
 import { logError } from '../utils/errorHandling';
@@ -19,12 +23,12 @@ export const useStockPrice = (
 ): StockPriceHookReturn => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const { error: showError } = useToast();
-  
+
   const [data, setData] = useState<StockQuote | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<any>(null);
   const [isStale, setIsStale] = useState<boolean>(false);
-  
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastFetchRef = useRef<number>(0);
   const retryCountRef = useRef<number>(0);
@@ -36,25 +40,24 @@ export const useStockPrice = (
     try {
       setLoading(true);
       setError(null);
-      
+
       const quote = await stockApiService.getStockQuote(ticker.toUpperCase());
-      
+
       setData(quote);
       setIsStale(false);
       lastFetchRef.current = Date.now();
       retryCountRef.current = 0;
-      
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch stock price';
       setError({ message: errorMessage });
-      
+
       logError(err, `useStockPrice: ${ticker}`);
-      
+
       // Rate limit 에러가 아닌 경우에만 토스트 표시
       if (!errorMessage.includes('rate limit')) {
         showError('Stock Price Error', errorMessage);
       }
-      
+
       // 재시도 로직
       if (retryCountRef.current < opts.retryCount) {
         retryCountRef.current++;
@@ -62,7 +65,6 @@ export const useStockPrice = (
           fetchStockPrice();
         }, opts.retryDelay * retryCountRef.current);
       }
-      
     } finally {
       setLoading(false);
     }
@@ -138,11 +140,11 @@ export const useMultipleStockPrices = (
 ) => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const { error: showError } = useToast();
-  
+
   const [data, setData] = useState<Map<string, StockQuote>>(new Map());
   const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<Map<string, any>>(new Map());
-  
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastFetchRef = useRef<number>(0);
 
@@ -151,12 +153,12 @@ export const useMultipleStockPrices = (
 
     try {
       setLoading(true);
-      
+
       const results = await stockApiService.getMultipleQuotes(tickers);
-      
+
       const newData = new Map<string, StockQuote>();
       const newErrors = new Map<string, any>();
-      
+
       results.forEach((result, ticker) => {
         if (result instanceof Error) {
           newErrors.set(ticker, { message: result.message });
@@ -164,11 +166,10 @@ export const useMultipleStockPrices = (
           newData.set(ticker, result);
         }
       });
-      
+
       setData(newData);
       setErrors(newErrors);
       lastFetchRef.current = Date.now();
-      
     } catch (err: any) {
       logError(err, 'useMultipleStockPrices');
       showError('Stock Prices Error', 'Failed to fetch multiple stock prices');
@@ -185,7 +186,7 @@ export const useMultipleStockPrices = (
   useEffect(() => {
     if (opts.enabled && tickers.length > 0) {
       fetchMultiplePrices();
-      
+
       intervalRef.current = setInterval(() => {
         fetchMultiplePrices();
       }, opts.interval);
@@ -203,6 +204,8 @@ export const useMultipleStockPrices = (
     loading,
     errors,
     refetch,
-    isStale: lastFetchRef.current ? Date.now() - lastFetchRef.current > opts.interval : false,
+    isStale: lastFetchRef.current
+      ? Date.now() - lastFetchRef.current > opts.interval
+      : false,
   };
 };

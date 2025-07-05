@@ -29,7 +29,11 @@
       "Bash(pkill:*)",
       "Bash(true)",
       "Bash(git push:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(ls:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run format:*)"
     ],
     "deny": []
   }

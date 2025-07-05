@@ -73,13 +73,16 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 Something went wrong
               </h1>
               <p className="text-slate-300 mb-4">
-                We're sorry, but something unexpected happened. Please try again or go back to the home page.
+                We're sorry, but something unexpected happened. Please try again
+                or go back to the home page.
               </p>
             </div>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <div className="mb-6 p-4 bg-red-900/20 border border-red-500/20 rounded-lg text-left">
-                <h3 className="text-red-400 font-semibold mb-2">Error Details:</h3>
+                <h3 className="text-red-400 font-semibold mb-2">
+                  Error Details:
+                </h3>
                 <pre className="text-xs text-red-300 overflow-auto max-h-32">
                   {this.state.error.message}
                 </pre>

@@ -1,9 +1,14 @@
 import React from 'react';
 
-const LoadingSpinner: React.FC = () => {
+interface LoadingSpinnerProps {
+  message?: string;
+}
+
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message }) => {
   return (
-    <div className="flex items-center justify-center p-8">
+    <div className="flex flex-col items-center justify-center p-8">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      {message && <p className="text-slate-400 mt-4">{message}</p>}
     </div>
   );
 };

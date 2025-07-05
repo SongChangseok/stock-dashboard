@@ -1,7 +1,18 @@
 // 손익 히스토리 차트 컴포넌트
 
 import React, { useState, useMemo } from 'react';
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell } from 'recharts';
+import {
+  ComposedChart,
+  Bar,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  Cell,
+} from 'recharts';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { TrendingUp, TrendingDown, BarChart, LineChart } from 'lucide-react';
 
@@ -24,19 +35,19 @@ const generateProfitLossData = (): ProfitLossDataPoint[] => {
   const baseValue = 70000; // 초기 투자금
   const days = 30;
   let cumulativeProfitLoss = 0;
-  
+
   for (let i = days; i >= 0; i--) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    
+
     // 일일 손익 시뮬레이션 (-2% ~ +3% 범위)
-    const dailyChangePercent = -2 + (Math.random() * 5);
+    const dailyChangePercent = -2 + Math.random() * 5;
     const dailyProfitLoss = baseValue * (dailyChangePercent / 100);
     cumulativeProfitLoss += dailyProfitLoss;
-    
+
     const totalValue = baseValue + cumulativeProfitLoss;
     const profitLossPercent = (cumulativeProfitLoss / baseValue) * 100;
-    
+
     data.push({
       date: date.toISOString().split('T')[0],
       dailyProfitLoss,
@@ -46,14 +57,16 @@ const generateProfitLossData = (): ProfitLossDataPoint[] => {
       timestamp: date.getTime(),
     });
   }
-  
+
   return data;
 };
 
 const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
-  className = "",
+  className = '',
 }) => {
-  const [chartType, setChartType] = useState<'combined' | 'daily' | 'cumulative'>('combined');
+  const [chartType, setChartType] = useState<
+    'combined' | 'daily' | 'cumulative'
+  >('combined');
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
 
   // 손익 히스토리 데이터
@@ -67,7 +80,7 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
       '30d': 30 * 24 * 60 * 60 * 1000,
       '90d': 90 * 24 * 60 * 60 * 1000,
     };
-    
+
     const cutoff = now - ranges[timeRange];
     return profitLossData.filter(point => point.timestamp >= cutoff);
   }, [profitLossData, timeRange]);
@@ -75,19 +88,26 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
   // 통계 계산
   const stats = useMemo(() => {
     if (filteredData.length === 0) return null;
-    
+
     const latest = filteredData[filteredData.length - 1];
     const totalDays = filteredData.length;
-    const profitableDays = filteredData.filter(d => d.dailyProfitLoss > 0).length;
+    const profitableDays = filteredData.filter(
+      d => d.dailyProfitLoss > 0
+    ).length;
     const lossDays = filteredData.filter(d => d.dailyProfitLoss < 0).length;
-    
+
     const maxDaily = Math.max(...filteredData.map(d => d.dailyProfitLoss));
     const minDaily = Math.min(...filteredData.map(d => d.dailyProfitLoss));
-    const avgDaily = filteredData.reduce((sum, d) => sum + d.dailyProfitLoss, 0) / totalDays;
-    
-    const maxCumulative = Math.max(...filteredData.map(d => d.cumulativeProfitLoss));
-    const minCumulative = Math.min(...filteredData.map(d => d.cumulativeProfitLoss));
-    
+    const avgDaily =
+      filteredData.reduce((sum, d) => sum + d.dailyProfitLoss, 0) / totalDays;
+
+    const maxCumulative = Math.max(
+      ...filteredData.map(d => d.cumulativeProfitLoss)
+    );
+    const minCumulative = Math.min(
+      ...filteredData.map(d => d.cumulativeProfitLoss)
+    );
+
     return {
       current: latest.cumulativeProfitLoss,
       currentPercent: latest.profitLossPercent,
@@ -115,10 +135,14 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
             {new Date(data.date).toLocaleDateString()}
           </h4>
           <div className="space-y-1 text-sm">
-            <div className={`${data.dailyProfitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div
+              className={`${data.dailyProfitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+            >
               Daily P&L: {formatCurrency(data.dailyProfitLoss)}
             </div>
-            <div className={`${data.cumulativeProfitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div
+              className={`${data.cumulativeProfitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+            >
               Total P&L: {formatCurrency(data.cumulativeProfitLoss)}
             </div>
             <div className="text-slate-300">
@@ -136,24 +160,36 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
       {/* 헤더 */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>
-          <h3 className="text-xl font-bold text-white mb-2">Profit & Loss History</h3>
+          <h3 className="text-xl font-bold text-white mb-2">
+            Profit & Loss History
+          </h3>
           <div className="flex items-center gap-4">
-            <div className={`text-2xl font-bold ${
-              stats.current >= 0 ? 'text-emerald-400' : 'text-red-400'
-            }`}>
-              {stats.current >= 0 ? '+' : ''}{formatCurrency(stats.current)}
+            <div
+              className={`text-2xl font-bold ${
+                stats.current >= 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}
+            >
+              {stats.current >= 0 ? '+' : ''}
+              {formatCurrency(stats.current)}
             </div>
-            <div className={`flex items-center text-sm ${
-              stats.current >= 0 ? 'text-emerald-400' : 'text-red-400'
-            }`}>
-              {stats.current >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+            <div
+              className={`flex items-center text-sm ${
+                stats.current >= 0 ? 'text-emerald-400' : 'text-red-400'
+              }`}
+            >
+              {stats.current >= 0 ? (
+                <TrendingUp size={16} />
+              ) : (
+                <TrendingDown size={16} />
+              )}
               <span className="ml-1">
-                {stats.currentPercent >= 0 ? '+' : ''}{formatPercentage(stats.currentPercent, 2)}
+                {stats.currentPercent >= 0 ? '+' : ''}
+                {formatPercentage(stats.currentPercent, 2)}
               </span>
             </div>
           </div>
         </div>
-        
+
         {/* 컨트롤 */}
         <div className="flex flex-col sm:flex-row gap-2">
           {/* 차트 타입 선택 */}
@@ -161,16 +197,21 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
             {[
               { key: 'combined' as const, label: 'Combined', icon: BarChart },
               { key: 'daily' as const, label: 'Daily', icon: BarChart },
-              { key: 'cumulative' as const, label: 'Cumulative', icon: LineChart },
+              {
+                key: 'cumulative' as const,
+                label: 'Cumulative',
+                icon: LineChart,
+              },
             ].map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setChartType(key)}
                 className={`
                   flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
-                  ${chartType === key
-                    ? 'bg-spotify-green text-white'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
+                  ${
+                    chartType === key
+                      ? 'bg-spotify-green text-white'
+                      : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
                   }
                 `}
               >
@@ -179,7 +220,7 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
               </button>
             ))}
           </div>
-          
+
           {/* 시간 범위 */}
           <div className="flex gap-1">
             {(['7d', '30d', '90d'] as const).map(range => (
@@ -188,9 +229,10 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
                 onClick={() => setTimeRange(range)}
                 className={`
                   px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200
-                  ${timeRange === range
-                    ? 'bg-spotify-green text-white'
-                    : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
+                  ${
+                    timeRange === range
+                      ? 'bg-spotify-green text-white'
+                      : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
                   }
                 `}
               >
@@ -207,38 +249,43 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
           {chartType === 'combined' ? (
             <ComposedChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                tickFormatter={value =>
+                  new Date(value).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                }
               />
-              <YAxis 
+              <YAxis
                 yAxisId="left"
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={formatCurrency}
+                tickFormatter={(value) => formatCurrency(value)}
               />
-              <YAxis 
+              <YAxis
                 yAxisId="right"
                 orientation="right"
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={formatCurrency}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="#64748b" strokeDasharray="2 2" />
-              <Bar 
+              <Bar
                 yAxisId="left"
-                dataKey="dailyProfitLoss" 
+                dataKey="dailyProfitLoss"
                 fill="#1DB954"
                 fillOpacity={0.8}
                 name="Daily P&L"
               />
-              <Line 
+              <Line
                 yAxisId="right"
-                type="monotone" 
-                dataKey="cumulativeProfitLoss" 
+                type="monotone"
+                dataKey="cumulativeProfitLoss"
                 stroke="#06b6d4"
                 strokeWidth={2}
                 dot={{ fill: '#06b6d4', strokeWidth: 2, r: 3 }}
@@ -248,23 +295,25 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
           ) : chartType === 'daily' ? (
             <ComposedChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                tickFormatter={value =>
+                  new Date(value).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                }
               />
-              <YAxis 
+              <YAxis
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={formatCurrency}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="#64748b" strokeDasharray="2 2" />
-              <Bar 
-                dataKey="dailyProfitLoss" 
-                name="Daily P&L"
-              >
+              <Bar dataKey="dailyProfitLoss" name="Daily P&L">
                 {filteredData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
@@ -276,22 +325,27 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
           ) : (
             <ComposedChart data={filteredData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="date" 
+              <XAxis
+                dataKey="date"
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={(value) => new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                tickFormatter={value =>
+                  new Date(value).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                }
               />
-              <YAxis 
+              <YAxis
                 stroke="#9CA3AF"
                 fontSize={12}
-                tickFormatter={formatCurrency}
+                tickFormatter={(value) => formatCurrency(value)}
               />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="#64748b" strokeDasharray="2 2" />
-              <Line 
-                type="monotone" 
-                dataKey="cumulativeProfitLoss" 
+              <Line
+                type="monotone"
+                dataKey="cumulativeProfitLoss"
                 stroke="#06b6d4"
                 strokeWidth={3}
                 dot={{ fill: '#06b6d4', strokeWidth: 2, r: 4 }}
@@ -328,9 +382,11 @@ const ProfitLossChart: React.FC<ProfitLossChartProps> = ({
         </div>
         <div className="text-center p-3 bg-white/5 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Avg Daily</div>
-          <div className={`text-sm font-semibold ${
-            stats.avgDaily >= 0 ? 'text-emerald-400' : 'text-red-400'
-          }`}>
+          <div
+            className={`text-sm font-semibold ${
+              stats.avgDaily >= 0 ? 'text-emerald-400' : 'text-red-400'
+            }`}
+          >
             {formatCurrency(stats.avgDaily)}
           </div>
         </div>

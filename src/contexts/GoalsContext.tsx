@@ -1,5 +1,19 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { Goal, GoalState, GoalContextType, GoalContribution, GoalProgress, GoalMetrics, GoalType } from '../types/goals';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from 'react';
+import {
+  Goal,
+  GoalState,
+  GoalContextType,
+  GoalContribution,
+  GoalProgress,
+  GoalMetrics,
+  GoalType,
+} from '../types/goals';
 
 const initialState: GoalState = {
   goals: [],
@@ -11,10 +25,10 @@ const initialState: GoalState = {
     totalTargetAmount: 0,
     totalCurrentAmount: 0,
     overallProgress: 0,
-    onTrackGoals: 0
+    onTrackGoals: 0,
   },
   loading: false,
-  error: null
+  error: null,
 };
 
 type GoalAction =
@@ -33,51 +47,57 @@ const goalReducer = (state: GoalState, action: GoalAction): GoalState => {
       return {
         ...state,
         goals: [...state.goals, action.payload],
-        error: null
+        error: null,
       };
     case 'UPDATE_GOAL':
       return {
         ...state,
         goals: state.goals.map(goal =>
           goal.id === action.payload.id
-            ? { ...goal, ...action.payload.updates, updatedAt: new Date().toISOString() }
+            ? {
+                ...goal,
+                ...action.payload.updates,
+                updatedAt: new Date().toISOString(),
+              }
             : goal
         ),
-        error: null
+        error: null,
       };
     case 'DELETE_GOAL':
       return {
         ...state,
         goals: state.goals.filter(goal => goal.id !== action.payload),
-        contributions: state.contributions.filter(contrib => contrib.goalId !== action.payload),
-        error: null
+        contributions: state.contributions.filter(
+          contrib => contrib.goalId !== action.payload
+        ),
+        error: null,
       };
     case 'ADD_CONTRIBUTION':
       return {
         ...state,
         contributions: [...state.contributions, action.payload],
-        error: null
+        error: null,
       };
     case 'SET_LOADING':
       return {
         ...state,
-        loading: action.payload
+        loading: action.payload,
       };
     case 'SET_ERROR':
       return {
         ...state,
         error: action.payload,
-        loading: false
+        loading: false,
       };
     case 'CLEAR_ERROR':
       return {
         ...state,
-        error: null
+        error: null,
       };
     case 'UPDATE_METRICS':
       return {
         ...state,
-        metrics: action.payload
+        metrics: action.payload,
       };
     default:
       return state;
@@ -106,7 +126,7 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
       ...goalData,
       id: Date.now(),
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
     dispatch({ type: 'ADD_GOAL', payload: newGoal });
   };
@@ -122,14 +142,16 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
   const addContribution = (contributionData: Omit<GoalContribution, 'id'>) => {
     const newContribution: GoalContribution = {
       ...contributionData,
-      id: Date.now()
+      id: Date.now(),
     };
     dispatch({ type: 'ADD_CONTRIBUTION', payload: newContribution });
-    
+
     // Update goal's current amount
     const goal = state.goals.find(g => g.id === contributionData.goalId);
     if (goal) {
-      updateGoal(goal.id, { currentAmount: goal.currentAmount + contributionData.amount });
+      updateGoal(goal.id, {
+        currentAmount: goal.currentAmount + contributionData.amount,
+      });
     }
   };
 
@@ -139,21 +161,38 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
       throw new Error(`Goal with id ${goalId} not found`);
     }
 
-    const progress = Math.min((goal.currentAmount / goal.targetAmount) * 100, 100);
+    const progress = Math.min(
+      (goal.currentAmount / goal.targetAmount) * 100,
+      100
+    );
     const targetDate = new Date(goal.targetDate);
     const now = new Date();
-    const monthsRemaining = Math.max(0, 
-      (targetDate.getFullYear() - now.getFullYear()) * 12 + 
-      (targetDate.getMonth() - now.getMonth())
+    const monthsRemaining = Math.max(
+      0,
+      (targetDate.getFullYear() - now.getFullYear()) * 12 +
+        (targetDate.getMonth() - now.getMonth())
     );
 
     const remainingAmount = goal.targetAmount - goal.currentAmount;
-    const monthlyRequired = monthsRemaining > 0 ? remainingAmount / monthsRemaining : 0;
-    const onTrack = monthlyRequired <= goal.monthlyContribution || progress >= 100;
+    const monthlyRequired =
+      monthsRemaining > 0 ? remainingAmount / monthsRemaining : 0;
+    const onTrack =
+      monthlyRequired <= goal.monthlyContribution || progress >= 100;
 
-    const estimatedCompletion = monthlyRequired > 0 && goal.monthlyContribution > 0
-      ? new Date(now.getTime() + (remainingAmount / goal.monthlyContribution) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      : goal.targetDate;
+    const estimatedCompletion =
+      monthlyRequired > 0 && goal.monthlyContribution > 0
+        ? new Date(
+            now.getTime() +
+              (remainingAmount / goal.monthlyContribution) *
+                30 *
+                24 *
+                60 *
+                60 *
+                1000
+          )
+            .toISOString()
+            .split('T')[0]
+        : goal.targetDate;
 
     return {
       goalId,
@@ -161,7 +200,7 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
       estimatedCompletion,
       monthsRemaining,
       onTrack,
-      monthlyRequired
+      monthlyRequired,
     };
   };
 
@@ -179,12 +218,23 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
 
   const updateMetrics = () => {
     const activeGoals = state.goals.filter(goal => goal.isActive);
-    const completedGoals = state.goals.filter(goal => goal.currentAmount >= goal.targetAmount);
-    
-    const totalTargetAmount = state.goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
-    const totalCurrentAmount = state.goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
-    const overallProgress = totalTargetAmount > 0 ? (totalCurrentAmount / totalTargetAmount) * 100 : 0;
-    
+    const completedGoals = state.goals.filter(
+      goal => goal.currentAmount >= goal.targetAmount
+    );
+
+    const totalTargetAmount = state.goals.reduce(
+      (sum, goal) => sum + goal.targetAmount,
+      0
+    );
+    const totalCurrentAmount = state.goals.reduce(
+      (sum, goal) => sum + goal.currentAmount,
+      0
+    );
+    const overallProgress =
+      totalTargetAmount > 0
+        ? (totalCurrentAmount / totalTargetAmount) * 100
+        : 0;
+
     const onTrackGoals = state.goals.filter(goal => {
       const progress = calculateProgress(goal.id);
       return progress.onTrack;
@@ -197,7 +247,7 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
       totalTargetAmount,
       totalCurrentAmount,
       overallProgress,
-      onTrackGoals
+      onTrackGoals,
     };
 
     dispatch({ type: 'UPDATE_METRICS', payload: metrics });
@@ -216,12 +266,10 @@ export const GoalsProvider: React.FC<GoalsProviderProps> = ({ children }) => {
     calculateProgress,
     getGoalsByType,
     setError,
-    clearError
+    clearError,
   };
 
   return (
-    <GoalsContext.Provider value={value}>
-      {children}
-    </GoalsContext.Provider>
+    <GoalsContext.Provider value={value}>{children}</GoalsContext.Provider>
   );
 };

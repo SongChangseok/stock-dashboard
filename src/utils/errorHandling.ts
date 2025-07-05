@@ -30,15 +30,15 @@ export const handleAsyncError = async <T>(
     return await operation();
   } catch (error) {
     console.error('Async operation failed:', error);
-    
+
     if (error instanceof AppError) {
       throw error;
     }
-    
+
     if (error instanceof Error) {
       throw new AppError(error.message);
     }
-    
+
     throw new AppError(errorMessage);
   }
 };
@@ -106,19 +106,19 @@ export const formatErrorMessage = (error: any): string => {
   if (typeof error === 'string') {
     return error;
   }
-  
+
   if (error instanceof AppError) {
     return error.message;
   }
-  
+
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   if (error?.message) {
     return error.message;
   }
-  
+
   return 'An unexpected error occurred';
 };
 
@@ -129,22 +129,22 @@ export const retryOperation = async <T>(
   delay: number = 1000
 ): Promise<T> => {
   let lastError: any;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
     } catch (error) {
       lastError = error;
-      
+
       if (attempt === maxRetries) {
         throw error;
       }
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay * attempt));
     }
   }
-  
+
   throw lastError;
 };
 
@@ -157,12 +157,12 @@ export const logError = (error: any, context?: string): void => {
     stack: error?.stack,
     details: error,
   };
-  
+
   // In development, log to console
   if (process.env.NODE_ENV === 'development') {
     console.error('Error logged:', errorInfo);
   }
-  
+
   // In production, you might want to send to an error tracking service
   // Example: sendToErrorTrackingService(errorInfo);
 };

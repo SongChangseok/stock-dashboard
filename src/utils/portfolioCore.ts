@@ -4,11 +4,17 @@ import { Stock } from '../types/portfolio';
 
 // Basic portfolio calculations
 export const calculateTotalValue = (stocks: Stock[]): number => {
-  return stocks.reduce((total, stock) => total + (stock.currentPrice * stock.quantity), 0);
+  return stocks.reduce(
+    (total, stock) => total + stock.currentPrice * stock.quantity,
+    0
+  );
 };
 
 export const calculateTotalInvestment = (stocks: Stock[]): number => {
-  return stocks.reduce((total, stock) => total + (stock.buyPrice * stock.quantity), 0);
+  return stocks.reduce(
+    (total, stock) => total + stock.buyPrice * stock.quantity,
+    0
+  );
 };
 
 export const calculateTotalProfitLoss = (stocks: Stock[]): number => {
@@ -35,7 +41,10 @@ export const calculateStockReturnPercent = (stock: Stock): number => {
 };
 
 // Portfolio weight calculations
-export const calculateStockWeight = (stock: Stock, totalValue: number): number => {
+export const calculateStockWeight = (
+  stock: Stock,
+  totalValue: number
+): number => {
   if (totalValue === 0) return 0;
   return (stock.currentPrice * stock.quantity) / totalValue;
 };
@@ -48,7 +57,7 @@ export const calculatePortfolioWeights = (stocks: Stock[]): number[] => {
 // Performance analysis helpers
 export const findBestPerformer = (stocks: Stock[]): Stock | undefined => {
   if (stocks.length === 0) return undefined;
-  
+
   return stocks.reduce((best, current) => {
     const bestPercent = calculateStockReturnPercent(best);
     const currentPercent = calculateStockReturnPercent(current);
@@ -58,7 +67,7 @@ export const findBestPerformer = (stocks: Stock[]): Stock | undefined => {
 
 export const findWorstPerformer = (stocks: Stock[]): Stock | undefined => {
   if (stocks.length === 0) return undefined;
-  
+
   return stocks.reduce((worst, current) => {
     const worstPercent = calculateStockReturnPercent(worst);
     const currentPercent = calculateStockReturnPercent(current);
@@ -81,8 +90,15 @@ export const categorizeStocksByPerformance = (stocks: Stock[]) => {
     stockPerformances,
     winners,
     losers,
-    winLossRatio: losers.length > 0 ? winners.length / losers.length : winners.length,
-    averageGain: winners.length > 0 ? winners.reduce((sum, w) => sum + w.return, 0) / winners.length : 0,
-    averageLoss: losers.length > 0 ? Math.abs(losers.reduce((sum, l) => sum + l.return, 0)) / losers.length : 0,
+    winLossRatio:
+      losers.length > 0 ? winners.length / losers.length : winners.length,
+    averageGain:
+      winners.length > 0
+        ? winners.reduce((sum, w) => sum + w.return, 0) / winners.length
+        : 0,
+    averageLoss:
+      losers.length > 0
+        ? Math.abs(losers.reduce((sum, l) => sum + l.return, 0)) / losers.length
+        : 0,
   };
 };

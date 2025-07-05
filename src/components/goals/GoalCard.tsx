@@ -1,5 +1,12 @@
 import React from 'react';
-import { Edit, Trash2, Target, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import {
+  Edit,
+  Trash2,
+  Target,
+  TrendingUp,
+  Calendar,
+  DollarSign,
+} from 'lucide-react';
 import { Goal } from '../../types/goals';
 import { useGoals } from '../../contexts/GoalsContext';
 import { formatCurrency } from '../../utils/formatters';
@@ -43,14 +50,17 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete }) => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
-  const daysRemaining = Math.ceil((new Date(goal.targetDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.ceil(
+    (new Date(goal.targetDate).getTime() - new Date().getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
 
   return (
     <div className="bg-spotify-gray p-6 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
@@ -60,7 +70,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete }) => {
           {getGoalTypeIcon(goal.type)}
           <div>
             <h3 className="text-lg font-semibold text-white">{goal.title}</h3>
-            <p className="text-sm text-gray-400 capitalize">{goal.type.replace('_', ' ')}</p>
+            <p className="text-sm text-gray-400 capitalize">
+              {goal.type.replace('_', ' ')}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -88,7 +100,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete }) => {
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-400">Progress</span>
-          <span className="text-sm font-semibold text-white">{progress.progress.toFixed(1)}%</span>
+          <span className="text-sm font-semibold text-white">
+            {progress.progress.toFixed(1)}%
+          </span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-2">
           <div
@@ -136,7 +150,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete }) => {
             <Calendar size={16} className="text-gray-400" />
             <span className="text-xs text-gray-400">Days Left</span>
           </div>
-          <div className={`text-sm font-semibold ${daysRemaining < 30 ? 'text-red-400' : 'text-white'}`}>
+          <div
+            className={`text-sm font-semibold ${daysRemaining < 30 ? 'text-red-400' : 'text-white'}`}
+          >
             {daysRemaining > 0 ? daysRemaining : 'Overdue'}
           </div>
         </div>
@@ -145,7 +161,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete }) => {
       {/* Progress Status */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded-full ${progress.onTrack ? 'bg-green-500' : 'bg-red-500'}`} />
+          <div
+            className={`w-3 h-3 rounded-full ${progress.onTrack ? 'bg-green-500' : 'bg-red-500'}`}
+          />
           <span className="text-sm text-gray-400">
             {progress.onTrack ? 'On Track' : 'Behind Schedule'}
           </span>

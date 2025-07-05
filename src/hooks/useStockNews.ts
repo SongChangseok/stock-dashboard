@@ -29,66 +29,77 @@ export const useStockNews = (): UseStockNewsReturn => {
     setLoading(false);
   }, []);
 
-  const fetchStockNews = useCallback(async (ticker: string, limit: number = 20) => {
-    if (!ticker.trim()) {
-      setError('Stock ticker is required');
-      return;
-    }
+  const fetchStockNews = useCallback(
+    async (ticker: string, limit: number = 20) => {
+      if (!ticker.trim()) {
+        setError('Stock ticker is required');
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const request: StockNewsRequest = {
-        ticker: ticker.toUpperCase(),
-        limit,
-        fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Last 7 days
+      setLoading(true);
+      setError(null);
+
+      try {
+        const request: StockNewsRequest = {
+          ticker: ticker.toUpperCase(),
+          limit,
+          fromDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0], // Last 7 days
+        };
+
+        const newArticles = await newsApiService.getStockNews(request);
+        setArticles(newArticles);
+        setLastRequest({ type: 'stock', ticker, limit });
+        setCurrentPage(1);
+        setHasMore(newArticles.length >= limit);
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleError]
+  );
+
+  const fetchNews = useCallback(
+    async (filters: NewsFilters) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const newArticles = await newsApiService.searchNews(filters);
+        setArticles(newArticles);
+        setLastRequest({ type: 'search', filters });
+        setCurrentPage(filters.page || 1);
+        setHasMore(newArticles.length >= (filters.pageSize || 20));
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [handleError]
+  );
+
+  const searchNews = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setError('Search query is required');
+        return;
+      }
+
+      const filters: NewsFilters = {
+        query: query.trim(),
+        sortBy: 'publishedAt',
+        pageSize: 20,
+        page: 1,
       };
 
-      const newArticles = await newsApiService.getStockNews(request);
-      setArticles(newArticles);
-      setLastRequest({ type: 'stock', ticker, limit });
-      setCurrentPage(1);
-      setHasMore(newArticles.length >= limit);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [handleError]);
-
-  const fetchNews = useCallback(async (filters: NewsFilters) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const newArticles = await newsApiService.searchNews(filters);
-      setArticles(newArticles);
-      setLastRequest({ type: 'search', filters });
-      setCurrentPage(filters.page || 1);
-      setHasMore(newArticles.length >= (filters.pageSize || 20));
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [handleError]);
-
-  const searchNews = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setError('Search query is required');
-      return;
-    }
-
-    const filters: NewsFilters = {
-      query: query.trim(),
-      sortBy: 'publishedAt',
-      pageSize: 20,
-      page: 1
-    };
-
-    await fetchNews(filters);
-  }, [fetchNews]);
+      await fetchNews(filters);
+    },
+    [fetchNews]
+  );
 
   const refreshNews = useCallback(async () => {
     if (!lastRequest) {
@@ -116,7 +127,7 @@ export const useStockNews = (): UseStockNewsReturn => {
       if (lastRequest.type === 'search') {
         const filters = {
           ...lastRequest.filters,
-          page: nextPage
+          page: nextPage,
         };
         newArticles = await newsApiService.searchNews(filters);
       } else if (lastRequest.type === 'stock') {
@@ -124,7 +135,9 @@ export const useStockNews = (): UseStockNewsReturn => {
         const request: StockNewsRequest = {
           ticker: lastRequest.ticker,
           limit: 20,
-          fromDate: new Date(Date.now() - (nextPage * 7) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          fromDate: new Date(Date.now() - nextPage * 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split('T')[0],
         };
         newArticles = await newsApiService.getStockNews(request);
       }
@@ -179,6 +192,6 @@ export const useStockNews = (): UseStockNewsReturn => {
     refreshNews,
     clearNews,
     hasMore,
-    loadMore
+    loadMore,
   };
 };

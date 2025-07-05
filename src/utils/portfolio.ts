@@ -3,16 +3,25 @@
 // Color palette for charts and visualization
 export const getColorPalette = (count: number): string[] => {
   const baseColors = [
-    '#6366f1', '#8b5cf6', '#10b981', '#06b6d4', 
-    '#f59e0b', '#ef4444', '#84cc16', '#ec4899',
-    '#8b5cf6', '#f97316', '#06b6d4', '#10b981'
+    '#6366f1',
+    '#8b5cf6',
+    '#10b981',
+    '#06b6d4',
+    '#f59e0b',
+    '#ef4444',
+    '#84cc16',
+    '#ec4899',
+    '#8b5cf6',
+    '#f97316',
+    '#06b6d4',
+    '#10b981',
   ];
-  
+
   const colors: string[] = [];
   for (let i = 0; i < count; i++) {
     colors.push(baseColors[i % baseColors.length]);
   }
-  
+
   return colors;
 };
 

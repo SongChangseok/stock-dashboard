@@ -23,11 +23,13 @@ interface HeatmapData {
 
 const HeatmapChart: React.FC<HeatmapChartProps> = ({
   stocks,
-  title = "Performance Heatmap",
-  className = "",
+  title = 'Performance Heatmap',
+  className = '',
 }) => {
   const { stockPrices } = useStockPrices();
-  const [selectedMetric, setSelectedMetric] = useState<'profitLoss' | 'profitLossPercent' | 'weight'>('profitLossPercent');
+  const [selectedMetric, setSelectedMetric] = useState<
+    'profitLoss' | 'profitLossPercent' | 'weight'
+  >('profitLossPercent');
   const [hoveredStock, setHoveredStock] = useState<string | null>(null);
 
   // 히트맵 데이터 계산
@@ -35,10 +37,12 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
     if (stocks.length === 0) return [];
 
     const data = stocks.map(stock => {
-      const realTimePrice = stockPrices.get(stock.ticker)?.price || stock.currentPrice;
+      const realTimePrice =
+        stockPrices.get(stock.ticker)?.price || stock.currentPrice;
       const marketValue = realTimePrice * stock.quantity;
       const profitLoss = (realTimePrice - stock.buyPrice) * stock.quantity;
-      const profitLossPercent = ((realTimePrice - stock.buyPrice) / stock.buyPrice) * 100;
+      const profitLossPercent =
+        ((realTimePrice - stock.buyPrice) / stock.buyPrice) * 100;
 
       return {
         ticker: stock.ticker,
@@ -72,7 +76,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
     if (range === 0) return 'rgb(100, 116, 139)'; // 중립 색상
 
     const normalized = (value - minValue) / range;
-    
+
     if (selectedMetric === 'weight') {
       // 가중치는 blue 그라디언트
       const intensity = Math.round(normalized * 255);
@@ -96,9 +100,21 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
 
   // 메트릭 옵션
   const metricOptions = [
-    { key: 'profitLossPercent' as const, label: 'P&L %', format: (v: number) => formatPercentage(v, 2) },
-    { key: 'profitLoss' as const, label: 'P&L Amount', format: (v: number) => formatCurrency(v) },
-    { key: 'weight' as const, label: 'Portfolio Weight', format: (v: number) => formatPercentage(v, 1) },
+    {
+      key: 'profitLossPercent' as const,
+      label: 'P&L %',
+      format: (v: number) => formatPercentage(v, 2),
+    },
+    {
+      key: 'profitLoss' as const,
+      label: 'P&L Amount',
+      format: (v: number) => formatCurrency(v),
+    },
+    {
+      key: 'weight' as const,
+      label: 'Portfolio Weight',
+      format: (v: number) => formatPercentage(v, 1),
+    },
   ];
 
   const currentMetric = metricOptions.find(opt => opt.key === selectedMetric)!;
@@ -107,7 +123,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
     <div className={`glass-card-dark rounded-2xl p-6 ${className}`}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h3 className="text-xl font-bold text-white">{title}</h3>
-        
+
         {/* 메트릭 선택 */}
         <div className="flex gap-2">
           {metricOptions.map(option => (
@@ -116,9 +132,10 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
               onClick={() => setSelectedMetric(option.key)}
               className={`
                 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
-                ${selectedMetric === option.key
-                  ? 'bg-spotify-green text-white'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
+                ${
+                  selectedMetric === option.key
+                    ? 'bg-spotify-green text-white'
+                    : 'bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white'
                 }
               `}
             >
@@ -143,9 +160,10 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
                 onMouseLeave={() => setHoveredStock(null)}
                 className={`
                   relative p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer
-                  ${isHovered 
-                    ? 'border-white/40 scale-105 z-10' 
-                    : 'border-white/10 hover:border-white/20'
+                  ${
+                    isHovered
+                      ? 'border-white/40 scale-105 z-10'
+                      : 'border-white/10 hover:border-white/20'
                   }
                 `}
                 style={{ backgroundColor: color }}
@@ -167,9 +185,13 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 p-3 bg-black/90 rounded-lg border border-white/20 backdrop-blur-sm min-w-48 z-20">
                     <div className="text-white text-sm space-y-1">
                       <div className="font-semibold">{stock.ticker}</div>
-                      <div>Market Value: {formatCurrency(stock.marketValue)}</div>
+                      <div>
+                        Market Value: {formatCurrency(stock.marketValue)}
+                      </div>
                       <div>P&L: {formatCurrency(stock.profitLoss)}</div>
-                      <div>P&L %: {formatPercentage(stock.profitLossPercent, 2)}</div>
+                      <div>
+                        P&L %: {formatPercentage(stock.profitLossPercent, 2)}
+                      </div>
                       <div>Weight: {formatPercentage(stock.weight, 2)}</div>
                     </div>
                   </div>
@@ -185,10 +207,12 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
         <div className="flex items-center gap-2">
           <Info size={16} className="text-slate-400" />
           <span className="text-sm text-slate-400">
-            {selectedMetric === 'weight' ? 'Darker = Higher Weight' : 'Green = Profit, Red = Loss'}
+            {selectedMetric === 'weight'
+              ? 'Darker = Higher Weight'
+              : 'Green = Profit, Red = Loss'}
           </span>
         </div>
-        
+
         {/* 색상 범례 */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-400">
@@ -196,7 +220,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
           </span>
           <div className="flex h-4 w-32 rounded">
             {Array.from({ length: 20 }).map((_, i) => {
-              const value = minValue + (range * i / 19);
+              const value = minValue + (range * i) / 19;
               return (
                 <div
                   key={i}
@@ -229,7 +253,9 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
         <div className="text-center p-3 bg-white/5 rounded-lg">
           <div className="text-xs text-slate-400 mb-1">Average</div>
           <div className="text-sm font-semibold text-white">
-            {currentMetric.format(metricValues.reduce((a, b) => a + b, 0) / metricValues.length)}
+            {currentMetric.format(
+              metricValues.reduce((a, b) => a + b, 0) / metricValues.length
+            )}
           </div>
         </div>
         <div className="text-center p-3 bg-white/5 rounded-lg">

@@ -20,8 +20,8 @@ interface TreemapData extends PortfolioData {
 
 const TreemapChart: React.FC<TreemapChartProps> = ({
   data,
-  title = "Portfolio Allocation",
-  className = "",
+  title = 'Portfolio Allocation',
+  className = '',
 }) => {
   const { stockPrices } = useStockPrices();
   const [selectedStock, setSelectedStock] = useState<TreemapData | null>(null);
@@ -33,13 +33,14 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
     const realTimeQuote = stockPrices.get(stock.name);
     const quantity = stock.quantity || 1;
     const originalPrice = stock.value / quantity;
-    
-    const profitLoss = realTimeQuote ? 
-      (realTimeQuote.price - originalPrice) * quantity :
-      0;
-    const profitLossPercent = realTimeQuote && originalPrice > 0 ? 
-      ((realTimeQuote.price - originalPrice) / originalPrice) * 100 :
-      0;
+
+    const profitLoss = realTimeQuote
+      ? (realTimeQuote.price - originalPrice) * quantity
+      : 0;
+    const profitLossPercent =
+      realTimeQuote && originalPrice > 0
+        ? ((realTimeQuote.price - originalPrice) / originalPrice) * 100
+        : 0;
 
     return {
       ...stock,
@@ -52,7 +53,8 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
 
   // 커스텀 셀 렌더러
   const CustomizedContent = (props: any) => {
-    const { root, depth, x, y, width, height, index, name, value, color } = props;
+    const { root, depth, x, y, width, height, index, name, value, color } =
+      props;
     const stockData = enhancedData[index];
     const percentage = (value / totalValue) * 100;
     const isProfit = (stockData?.profitLoss || 0) >= 0;
@@ -75,9 +77,11 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
             opacity: selectedStock && selectedStock.name !== name ? 0.5 : 1,
           }}
           className="cursor-pointer transition-opacity duration-200"
-          onClick={() => setSelectedStock(selectedStock?.name === name ? null : stockData)}
+          onClick={() =>
+            setSelectedStock(selectedStock?.name === name ? null : stockData)
+          }
         />
-        
+
         {showText && (
           <text
             x={x + width / 2}
@@ -90,7 +94,7 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
             {name}
           </text>
         )}
-        
+
         {showDetails && (
           <>
             <text
@@ -119,7 +123,8 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
                 fill={isProfit ? '#10b981' : '#ef4444'}
                 fontSize={Math.min(width / 16, height / 12, 10)}
               >
-                {isProfit ? '+' : ''}{formatCurrency(stockData.profitLoss)}
+                {isProfit ? '+' : ''}
+                {formatCurrency(stockData.profitLoss)}
               </text>
             )}
           </>
@@ -149,20 +154,30 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
             <div>
               <h4 className="text-white font-semibold">{selectedStock.name}</h4>
               <p className="text-slate-300 text-sm">
-                {formatCurrency(selectedStock.value)} • {formatPercentage((selectedStock.value / totalValue) * 100, 2)}
+                {formatCurrency(selectedStock.value)} •{' '}
+                {formatPercentage((selectedStock.value / totalValue) * 100, 2)}
               </p>
             </div>
             {selectedStock.profitLoss !== undefined && (
-              <div className={`flex items-center ${
-                selectedStock.profitLoss >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}>
-                {selectedStock.profitLoss >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+              <div
+                className={`flex items-center ${
+                  selectedStock.profitLoss >= 0
+                    ? 'text-emerald-400'
+                    : 'text-red-400'
+                }`}
+              >
+                {selectedStock.profitLoss >= 0 ? (
+                  <TrendingUp size={16} />
+                ) : (
+                  <TrendingDown size={16} />
+                )}
                 <span className="ml-1 font-semibold">
                   {formatCurrency(selectedStock.profitLoss)}
                 </span>
                 {selectedStock.profitLossPercent !== undefined && (
                   <span className="ml-1 text-sm">
-                    ({selectedStock.profitLossPercent >= 0 ? '+' : ''}{formatPercentage(selectedStock.profitLossPercent, 2)})
+                    ({selectedStock.profitLossPercent >= 0 ? '+' : ''}
+                    {formatPercentage(selectedStock.profitLossPercent, 2)})
                   </span>
                 )}
               </div>
@@ -189,12 +204,17 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
         {enhancedData.map((stock, index) => (
           <div
             key={stock.name}
-            onClick={() => setSelectedStock(selectedStock?.name === stock.name ? null : stock)}
+            onClick={() =>
+              setSelectedStock(
+                selectedStock?.name === stock.name ? null : stock
+              )
+            }
             className={`
               flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-all duration-200
-              ${selectedStock?.name === stock.name 
-                ? 'bg-spotify-green/20 border border-spotify-green/40' 
-                : 'hover:bg-white/5'
+              ${
+                selectedStock?.name === stock.name
+                  ? 'bg-spotify-green/20 border border-spotify-green/40'
+                  : 'hover:bg-white/5'
               }
             `}
           >

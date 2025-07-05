@@ -71,13 +71,15 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         className={`
           relative inline-flex items-center rounded-full transition-all duration-300 ease-in-out
           ${styles.switch}
-          ${enabled 
-            ? `${colorStyles[color]} shadow-lg` 
-            : 'bg-slate-600 hover:bg-slate-500'
+          ${
+            enabled
+              ? `${colorStyles[color]} shadow-lg`
+              : 'bg-slate-600 hover:bg-slate-500'
           }
-          ${disabled 
-            ? 'opacity-50 cursor-not-allowed' 
-            : 'cursor-pointer hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+          ${
+            disabled
+              ? 'opacity-50 cursor-not-allowed'
+              : 'cursor-pointer hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
           }
         `}
       >
@@ -95,7 +97,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
       {(label || description) && (
         <div className="flex flex-col">
           {label && (
-            <span 
+            <span
               className={`text-sm font-medium ${
                 disabled ? 'text-slate-500' : 'text-white'
               }`}
@@ -104,9 +106,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
             </span>
           )}
           {description && (
-            <span className="text-xs text-slate-400">
-              {description}
-            </span>
+            <span className="text-xs text-slate-400">{description}</span>
           )}
         </div>
       )}

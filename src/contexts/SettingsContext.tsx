@@ -1,6 +1,12 @@
 // 사용자 설정 관리 컨텍스트
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 
 interface SettingsState {
   realTimePriceUpdates: boolean;
@@ -12,7 +18,10 @@ interface SettingsState {
 
 interface SettingsContextType {
   settings: SettingsState;
-  updateSetting: <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => void;
+  updateSetting: <K extends keyof SettingsState>(
+    key: K,
+    value: SettingsState[K]
+  ) => void;
   resetSettings: () => void;
   exportSettings: () => string;
   importSettings: (settingsJson: string) => boolean;
@@ -28,7 +37,9 @@ const DEFAULT_SETTINGS: SettingsState = {
 
 const SETTINGS_STORAGE_KEY = 'stock-dashboard-settings';
 
-const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(
+  undefined
+);
 
 export const useSettings = (): SettingsContextType => {
   const context = useContext(SettingsContext);
@@ -42,7 +53,9 @@ interface SettingsProviderProps {
   children: React.ReactNode;
 }
 
-export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) => {
+export const SettingsProvider: React.FC<SettingsProviderProps> = ({
+  children,
+}) => {
   const [settings, setSettings] = useState<SettingsState>(() => {
     // localStorage에서 설정 로드
     try {
@@ -67,15 +80,15 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   }, [settings]);
 
   // 개별 설정 업데이트
-  const updateSetting = useCallback(<K extends keyof SettingsState>(
-    key: K, 
-    value: SettingsState[K]
-  ) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-  }, []);
+  const updateSetting = useCallback(
+    <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+      setSettings(prev => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    []
+  );
 
   // 설정 초기화
   const resetSettings = useCallback(() => {
@@ -91,7 +104,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const importSettings = useCallback((settingsJson: string): boolean => {
     try {
       const parsed = JSON.parse(settingsJson);
-      
+
       // 기본 검증
       if (typeof parsed !== 'object' || parsed === null) {
         throw new Error('Invalid settings format');
@@ -99,23 +112,27 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
       // 유효한 설정만 적용
       const validSettings: Partial<SettingsState> = {};
-      
+
       if (typeof parsed.realTimePriceUpdates === 'boolean') {
         validSettings.realTimePriceUpdates = parsed.realTimePriceUpdates;
       }
-      
-      if (typeof parsed.updateInterval === 'number' && parsed.updateInterval >= 10000) {
+
+      if (
+        typeof parsed.updateInterval === 'number' &&
+        parsed.updateInterval >= 10000
+      ) {
         validSettings.updateInterval = parsed.updateInterval;
       }
-      
+
       if (typeof parsed.showPriceChangeAnimations === 'boolean') {
-        validSettings.showPriceChangeAnimations = parsed.showPriceChangeAnimations;
+        validSettings.showPriceChangeAnimations =
+          parsed.showPriceChangeAnimations;
       }
-      
+
       if (typeof parsed.enableNotifications === 'boolean') {
         validSettings.enableNotifications = parsed.enableNotifications;
       }
-      
+
       if (parsed.theme === 'dark' || parsed.theme === 'light') {
         validSettings.theme = parsed.theme;
       }

@@ -20,7 +20,7 @@ export enum GoalType {
   EMERGENCY = 'emergency',
   VACATION = 'vacation',
   INVESTMENT = 'investment',
-  OTHER = 'other'
+  OTHER = 'other',
 }
 
 export interface GoalFormData {

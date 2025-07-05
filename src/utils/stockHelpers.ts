@@ -1,15 +1,15 @@
 // Stock calculation and utility functions for individual stocks
+// Note: Main calculation functions moved to portfolioCore.ts to avoid duplication
 
 import { Stock } from '../types/portfolio';
+import {
+  calculateStockReturn,
+  calculateStockReturnPercent,
+} from './portfolioCore';
 
-export const calculateProfitLoss = (stock: Stock): number => {
-  return (stock.currentPrice - stock.buyPrice) * stock.quantity;
-};
-
-export const calculateProfitLossPercent = (stock: Stock): number => {
-  if (stock.buyPrice === 0) return 0;
-  return ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
-};
+// Re-export core functions with consistent naming
+export const calculateProfitLoss = calculateStockReturn;
+export const calculateProfitLossPercent = calculateStockReturnPercent;
 
 export const calculateMarketValue = (stock: Stock): number => {
   return stock.currentPrice * stock.quantity;

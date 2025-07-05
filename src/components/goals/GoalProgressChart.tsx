@@ -1,5 +1,14 @@
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 import { Goal } from '../../types/goals';
 import { useGoals } from '../../contexts/GoalsContext';
 
@@ -13,12 +22,15 @@ const GoalProgressChart: React.FC<GoalProgressChartProps> = ({ goals }) => {
   const chartData = goals.map(goal => {
     const progress = calculateProgress(goal.id);
     return {
-      name: goal.title.length > 15 ? goal.title.substring(0, 15) + '...' : goal.title,
+      name:
+        goal.title.length > 15
+          ? goal.title.substring(0, 15) + '...'
+          : goal.title,
       progress: Math.round(progress.progress),
       target: goal.targetAmount,
       current: goal.currentAmount,
       onTrack: progress.onTrack,
-      type: goal.type
+      type: goal.type,
     };
   });
 
@@ -40,16 +52,20 @@ const GoalProgressChart: React.FC<GoalProgressChartProps> = ({ goals }) => {
             <span className="font-medium">Progress:</span> {data.progress}%
           </p>
           <p className="text-gray-300">
-            <span className="font-medium">Current:</span> ${data.current.toLocaleString()}
+            <span className="font-medium">Current:</span> $
+            {data.current.toLocaleString()}
           </p>
           <p className="text-gray-300">
-            <span className="font-medium">Target:</span> ${data.target.toLocaleString()}
+            <span className="font-medium">Target:</span> $
+            {data.target.toLocaleString()}
           </p>
           <p className="text-gray-300">
-            <span className="font-medium">Status:</span> {data.onTrack ? 'On Track' : 'Behind Schedule'}
+            <span className="font-medium">Status:</span>{' '}
+            {data.onTrack ? 'On Track' : 'Behind Schedule'}
           </p>
           <p className="text-gray-300 capitalize">
-            <span className="font-medium">Type:</span> {data.type.replace('_', ' ')}
+            <span className="font-medium">Type:</span>{' '}
+            {data.type.replace('_', ' ')}
           </p>
         </div>
       );
@@ -92,12 +108,20 @@ const GoalProgressChart: React.FC<GoalProgressChartProps> = ({ goals }) => {
             axisLine={{ stroke: '#4B5563' }}
             tickLine={{ stroke: '#4B5563' }}
             domain={[0, 100]}
-            label={{ value: 'Progress (%)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9CA3AF' } }}
+            label={{
+              value: 'Progress (%)',
+              angle: -90,
+              position: 'insideLeft',
+              style: { textAnchor: 'middle', fill: '#9CA3AF' },
+            }}
           />
           <Tooltip content={<CustomTooltip />} />
           <Bar dataKey="progress" radius={[4, 4, 0, 0]}>
             {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getBarColor(entry.progress, entry.onTrack)} />
+              <Cell
+                key={`cell-${index}`}
+                fill={getBarColor(entry.progress, entry.onTrack)}
+              />
             ))}
           </Bar>
         </BarChart>

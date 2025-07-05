@@ -1,11 +1,17 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { 
-  PortfolioSnapshot, 
-  PortfolioHistoryState, 
-  PortfolioHistoryContextType, 
-  PerformanceMetrics, 
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from 'react';
+import {
+  PortfolioSnapshot,
+  PortfolioHistoryState,
+  PortfolioHistoryContextType,
+  PerformanceMetrics,
   DrawdownPeriod,
-  TimeframeOption 
+  TimeframeOption,
 } from '../types/history';
 
 const initialState: PortfolioHistoryState = {
@@ -14,7 +20,7 @@ const initialState: PortfolioHistoryState = {
   drawdowns: [],
   loading: false,
   error: null,
-  lastSnapshotDate: null
+  lastSnapshotDate: null,
 };
 
 type HistoryAction =
@@ -27,62 +33,71 @@ type HistoryAction =
   | { type: 'CLEAR_HISTORY' }
   | { type: 'SET_LAST_SNAPSHOT_DATE'; payload: string };
 
-const historyReducer = (state: PortfolioHistoryState, action: HistoryAction): PortfolioHistoryState => {
+const historyReducer = (
+  state: PortfolioHistoryState,
+  action: HistoryAction
+): PortfolioHistoryState => {
   switch (action.type) {
     case 'ADD_SNAPSHOT':
       return {
         ...state,
-        snapshots: [...state.snapshots, action.payload].sort((a, b) => a.timestamp - b.timestamp),
+        snapshots: [...state.snapshots, action.payload].sort(
+          (a, b) => a.timestamp - b.timestamp
+        ),
         lastSnapshotDate: action.payload.date,
-        error: null
+        error: null,
       };
     case 'SET_SNAPSHOTS':
       return {
         ...state,
         snapshots: action.payload.sort((a, b) => a.timestamp - b.timestamp),
-        error: null
+        error: null,
       };
     case 'UPDATE_METRICS':
       return {
         ...state,
-        metrics: action.payload
+        metrics: action.payload,
       };
     case 'SET_DRAWDOWNS':
       return {
         ...state,
-        drawdowns: action.payload
+        drawdowns: action.payload,
       };
     case 'SET_LOADING':
       return {
         ...state,
-        loading: action.payload
+        loading: action.payload,
       };
     case 'SET_ERROR':
       return {
         ...state,
         error: action.payload,
-        loading: false
+        loading: false,
       };
     case 'CLEAR_HISTORY':
       return {
-        ...initialState
+        ...initialState,
       };
     case 'SET_LAST_SNAPSHOT_DATE':
       return {
         ...state,
-        lastSnapshotDate: action.payload
+        lastSnapshotDate: action.payload,
       };
     default:
       return state;
   }
 };
 
-const PortfolioHistoryContext = createContext<PortfolioHistoryContextType | undefined>(undefined);
+const PortfolioHistoryContext = createContext<
+  PortfolioHistoryContextType | undefined
+>(undefined);
 
 export const usePortfolioHistory = (): PortfolioHistoryContextType => {
   const context = useContext(PortfolioHistoryContext);
   if (!context) {
-    throw new Error('usePortfolioHistory must be used within a PortfolioHistoryProvider');
+    throw new Error(
+      'usePortfolioHistory must be used within a PortfolioHistoryProvider'
+    );
   }
   return context;
 };
@@ -91,7 +106,9 @@ interface PortfolioHistoryProviderProps {
   children: ReactNode;
 }
 
-export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> = ({ children }) => {
+export const PortfolioHistoryProvider: React.FC<
+  PortfolioHistoryProviderProps
+> = ({ children }) => {
   const [state, dispatch] = useReducer(historyReducer, initialState);
 
   // Load history from localStorage on mount
@@ -124,7 +141,10 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
       // Check if snapshot already exists for today
       const existingSnapshot = state.snapshots.find(s => s.date === dateString);
       if (existingSnapshot) {
-        dispatch({ type: 'SET_ERROR', payload: 'Snapshot already exists for today' });
+        dispatch({
+          type: 'SET_ERROR',
+          payload: 'Snapshot already exists for today',
+        });
         return;
       }
 
@@ -134,17 +154,19 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
         totalValue: portfolioData.totalValue || 0,
         totalGainLoss: portfolioData.totalGainLoss || 0,
         totalGainLossPercent: portfolioData.totalGainLossPercent || 0,
-        stockSnapshots: portfolioData.stocks?.map((stock: any) => ({
-          stockId: stock.id,
-          ticker: stock.ticker,
-          quantity: stock.quantity,
-          price: stock.currentPrice,
-          value: stock.currentPrice * stock.quantity,
-          gainLoss: (stock.currentPrice - stock.buyPrice) * stock.quantity,
-          gainLossPercent: ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100,
-          buyPrice: stock.buyPrice
-        })) || [],
-        timestamp: now.getTime()
+        stockSnapshots:
+          portfolioData.stocks?.map((stock: any) => ({
+            stockId: stock.id,
+            ticker: stock.ticker,
+            quantity: stock.quantity,
+            price: stock.currentPrice,
+            value: stock.currentPrice * stock.quantity,
+            gainLoss: (stock.currentPrice - stock.buyPrice) * stock.quantity,
+            gainLossPercent:
+              ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100,
+            buyPrice: stock.buyPrice,
+          })) || [],
+        timestamp: now.getTime(),
       };
 
       dispatch({ type: 'ADD_SNAPSHOT', payload: snapshot });
@@ -154,17 +176,22 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
     }
   };
 
-  const getSnapshotsByDateRange = (startDate: string, endDate: string): PortfolioSnapshot[] => {
+  const getSnapshotsByDateRange = (
+    startDate: string,
+    endDate: string
+  ): PortfolioSnapshot[] => {
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
-    
+
     return state.snapshots.filter(snapshot => {
       const snapshotTime = snapshot.timestamp;
       return snapshotTime >= start && snapshotTime <= end;
     });
   };
 
-  const calculateMetrics = (snapshots: PortfolioSnapshot[]): PerformanceMetrics => {
+  const calculateMetrics = (
+    snapshots: PortfolioSnapshot[]
+  ): PerformanceMetrics => {
     if (snapshots.length < 2) {
       return {
         totalReturn: 0,
@@ -179,14 +206,16 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
         averageLoss: 0,
         profitFactor: 0,
         sortino: 0,
-        calmarRatio: 0
+        calmarRatio: 0,
       };
     }
 
-    const sortedSnapshots = [...snapshots].sort((a, b) => a.timestamp - b.timestamp);
+    const sortedSnapshots = [...snapshots].sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
     const firstSnapshot = sortedSnapshots[0];
     const lastSnapshot = sortedSnapshots[sortedSnapshots.length - 1];
-    
+
     // Calculate daily returns
     const dailyReturns: number[] = [];
     for (let i = 1; i < sortedSnapshots.length; i++) {
@@ -199,36 +228,53 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
 
     // Total return
     const totalReturn = lastSnapshot.totalValue - firstSnapshot.totalValue;
-    const totalReturnPercent = firstSnapshot.totalValue > 0 ? 
-      (totalReturn / firstSnapshot.totalValue) * 100 : 0;
+    const totalReturnPercent =
+      firstSnapshot.totalValue > 0
+        ? (totalReturn / firstSnapshot.totalValue) * 100
+        : 0;
 
     // Annualized return
-    const daysDiff = (lastSnapshot.timestamp - firstSnapshot.timestamp) / (1000 * 60 * 60 * 24);
+    const daysDiff =
+      (lastSnapshot.timestamp - firstSnapshot.timestamp) /
+      (1000 * 60 * 60 * 24);
     const years = daysDiff / 365.25;
-    const annualizedReturn = years > 0 ? 
-      (Math.pow(lastSnapshot.totalValue / firstSnapshot.totalValue, 1 / years) - 1) * 100 : 0;
+    const annualizedReturn =
+      years > 0
+        ? (Math.pow(
+            lastSnapshot.totalValue / firstSnapshot.totalValue,
+            1 / years
+          ) -
+            1) *
+          100
+        : 0;
 
     // Volatility (standard deviation of daily returns)
-    const avgReturn = dailyReturns.reduce((sum, r) => sum + r, 0) / dailyReturns.length;
-    const variance = dailyReturns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / dailyReturns.length;
+    const avgReturn =
+      dailyReturns.reduce((sum, r) => sum + r, 0) / dailyReturns.length;
+    const variance =
+      dailyReturns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) /
+      dailyReturns.length;
     const volatility = Math.sqrt(variance) * Math.sqrt(252) * 100; // Annualized
 
     // Sharpe ratio (assuming 2% risk-free rate)
     const riskFreeRate = 0.02;
-    const sharpeRatio = volatility > 0 ? (annualizedReturn / 100 - riskFreeRate) / (volatility / 100) : 0;
+    const sharpeRatio =
+      volatility > 0
+        ? (annualizedReturn / 100 - riskFreeRate) / (volatility / 100)
+        : 0;
 
     // Max drawdown
     let maxDrawdown = 0;
     let maxDrawdownPercent = 0;
     let peak = sortedSnapshots[0].totalValue;
-    
+
     for (const snapshot of sortedSnapshots) {
       if (snapshot.totalValue > peak) {
         peak = snapshot.totalValue;
       }
       const drawdown = peak - snapshot.totalValue;
       const drawdownPercent = peak > 0 ? (drawdown / peak) * 100 : 0;
-      
+
       if (drawdown > maxDrawdown) {
         maxDrawdown = drawdown;
         maxDrawdownPercent = drawdownPercent;
@@ -238,19 +284,33 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
     // Win rate and profit metrics
     const gains = dailyReturns.filter(r => r > 0);
     const losses = dailyReturns.filter(r => r < 0);
-    const winRate = dailyReturns.length > 0 ? (gains.length / dailyReturns.length) * 100 : 0;
-    const averageGain = gains.length > 0 ? gains.reduce((sum, g) => sum + g, 0) / gains.length * 100 : 0;
-    const averageLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, l) => sum + l, 0) / losses.length) * 100 : 0;
+    const winRate =
+      dailyReturns.length > 0 ? (gains.length / dailyReturns.length) * 100 : 0;
+    const averageGain =
+      gains.length > 0
+        ? (gains.reduce((sum, g) => sum + g, 0) / gains.length) * 100
+        : 0;
+    const averageLoss =
+      losses.length > 0
+        ? Math.abs(losses.reduce((sum, l) => sum + l, 0) / losses.length) * 100
+        : 0;
     const profitFactor = averageLoss > 0 ? averageGain / averageLoss : 0;
 
     // Sortino ratio (downside deviation)
     const downsideReturns = dailyReturns.filter(r => r < avgReturn);
-    const downsideVariance = downsideReturns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) / downsideReturns.length;
-    const downsideDeviation = Math.sqrt(downsideVariance) * Math.sqrt(252) * 100;
-    const sortino = downsideDeviation > 0 ? (annualizedReturn / 100 - riskFreeRate) / (downsideDeviation / 100) : 0;
+    const downsideVariance =
+      downsideReturns.reduce((sum, r) => sum + Math.pow(r - avgReturn, 2), 0) /
+      downsideReturns.length;
+    const downsideDeviation =
+      Math.sqrt(downsideVariance) * Math.sqrt(252) * 100;
+    const sortino =
+      downsideDeviation > 0
+        ? (annualizedReturn / 100 - riskFreeRate) / (downsideDeviation / 100)
+        : 0;
 
     // Calmar ratio
-    const calmarRatio = maxDrawdownPercent > 0 ? annualizedReturn / maxDrawdownPercent : 0;
+    const calmarRatio =
+      maxDrawdownPercent > 0 ? annualizedReturn / maxDrawdownPercent : 0;
 
     return {
       totalReturn,
@@ -265,16 +325,20 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
       averageLoss,
       profitFactor,
       sortino,
-      calmarRatio
+      calmarRatio,
     };
   };
 
-  const calculateDrawdowns = (snapshots: PortfolioSnapshot[]): DrawdownPeriod[] => {
+  const calculateDrawdowns = (
+    snapshots: PortfolioSnapshot[]
+  ): DrawdownPeriod[] => {
     if (snapshots.length < 2) return [];
 
-    const sortedSnapshots = [...snapshots].sort((a, b) => a.timestamp - b.timestamp);
+    const sortedSnapshots = [...snapshots].sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
     const drawdowns: DrawdownPeriod[] = [];
-    
+
     let peak = sortedSnapshots[0].totalValue;
     let peakDate = sortedSnapshots[0].date;
     let inDrawdown = false;
@@ -284,11 +348,14 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
 
     for (let i = 1; i < sortedSnapshots.length; i++) {
       const snapshot = sortedSnapshots[i];
-      
+
       if (snapshot.totalValue > peak) {
         // End of drawdown period
         if (inDrawdown) {
-          const daysDiff = (new Date(snapshot.date).getTime() - new Date(drawdownStart).getTime()) / (1000 * 60 * 60 * 24);
+          const daysDiff =
+            (new Date(snapshot.date).getTime() -
+              new Date(drawdownStart).getTime()) /
+            (1000 * 60 * 60 * 24);
           drawdowns.push({
             startDate: drawdownStart,
             endDate: troughDate,
@@ -298,11 +365,11 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
             drawdownPercent: ((peak - trough) / peak) * 100,
             recovery: true,
             recoveryDate: snapshot.date,
-            duration: daysDiff
+            duration: daysDiff,
           });
           inDrawdown = false;
         }
-        
+
         peak = snapshot.totalValue;
         peakDate = snapshot.date;
         trough = peak;
@@ -313,7 +380,7 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
           inDrawdown = true;
           drawdownStart = peakDate;
         }
-        
+
         if (snapshot.totalValue < trough) {
           trough = snapshot.totalValue;
           troughDate = snapshot.date;
@@ -323,7 +390,9 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
 
     // Handle ongoing drawdown
     if (inDrawdown) {
-      const daysDiff = (new Date(troughDate).getTime() - new Date(drawdownStart).getTime()) / (1000 * 60 * 60 * 24);
+      const daysDiff =
+        (new Date(troughDate).getTime() - new Date(drawdownStart).getTime()) /
+        (1000 * 60 * 60 * 24);
       drawdowns.push({
         startDate: drawdownStart,
         endDate: troughDate,
@@ -332,14 +401,16 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
         drawdown: peak - trough,
         drawdownPercent: ((peak - trough) / peak) * 100,
         recovery: false,
-        duration: daysDiff
+        duration: daysDiff,
       });
     }
 
     return drawdowns;
   };
 
-  const getPerformanceForPeriod = (period: TimeframeOption): PortfolioSnapshot[] => {
+  const getPerformanceForPeriod = (
+    period: TimeframeOption
+  ): PortfolioSnapshot[] => {
     const now = new Date();
     let startDate: Date;
 
@@ -367,7 +438,9 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
         return state.snapshots;
     }
 
-    return state.snapshots.filter(snapshot => snapshot.timestamp >= startDate.getTime());
+    return state.snapshots.filter(
+      snapshot => snapshot.timestamp >= startDate.getTime()
+    );
   };
 
   const clearHistory = (): void => {
@@ -397,7 +470,7 @@ export const PortfolioHistoryProvider: React.FC<PortfolioHistoryProviderProps> =
     calculateDrawdowns,
     getPerformanceForPeriod,
     clearHistory,
-    setError
+    setError,
   };
 
   return (

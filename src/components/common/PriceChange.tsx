@@ -1,7 +1,14 @@
 // 가격 변화 애니메이션 컴포넌트
 
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, TrendingDown, Minus, Wifi, WifiOff, Pause } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Wifi,
+  WifiOff,
+  Pause,
+} from 'lucide-react';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import { useSettings } from '../../contexts/SettingsContext';
 
@@ -68,17 +75,17 @@ const PriceChange: React.FC<PriceChangeProps> = ({
   useEffect(() => {
     if (animationEnabled && currentPrice !== lastPrice && !isLoading) {
       setIsAnimating(true);
-      
+
       // 애니메이션 타임아웃 클리어
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
       }
-      
+
       // 애니메이션 종료
       animationTimeoutRef.current = setTimeout(() => {
         setIsAnimating(false);
       }, 1000);
-      
+
       setLastPrice(currentPrice);
     }
   }, [currentPrice, lastPrice, animationEnabled, isLoading]);
@@ -130,7 +137,7 @@ const PriceChange: React.FC<PriceChangeProps> = ({
     if (!showIcon) return null;
 
     const iconSize = sizeStyles[size].icon;
-    
+
     if (direction === 'up') {
       return <TrendingUp size={iconSize} className="text-emerald-400" />;
     } else if (direction === 'down') {
@@ -166,7 +173,7 @@ const PriceChange: React.FC<PriceChangeProps> = ({
   }
 
   return (
-    <div 
+    <div
       className={`
         flex items-center gap-2 transition-all duration-300 rounded-lg px-2 py-1
         ${isAnimating && animationEnabled ? `${directionBgColors[direction]} scale-105` : ''}
@@ -177,7 +184,9 @@ const PriceChange: React.FC<PriceChangeProps> = ({
       {/* 가격 */}
       <div className="flex items-center gap-1">
         {renderIcon()}
-        <span className={`font-semibold ${sizeStyles[size].price} ${directionColors[direction]}`}>
+        <span
+          className={`font-semibold ${sizeStyles[size].price} ${directionColors[direction]}`}
+        >
           {formatCurrency(currentPrice)}
         </span>
         {renderConnectionIcon()}
@@ -188,28 +197,24 @@ const PriceChange: React.FC<PriceChangeProps> = ({
         <div className={`flex items-center gap-1 ${sizeStyles[size].change}`}>
           {change !== undefined && (
             <span className={directionColors[direction]}>
-              {change >= 0 ? '+' : ''}{formatCurrency(change)}
+              {change >= 0 ? '+' : ''}
+              {formatCurrency(change)}
             </span>
           )}
-          
+
           {showPercent && changePercent !== undefined && (
             <span className={`${directionColors[direction]} font-medium`}>
-              ({changePercent >= 0 ? '+' : ''}{formatPercent(changePercent)})
+              ({changePercent >= 0 ? '+' : ''}
+              {formatPercent(changePercent)})
             </span>
           )}
         </div>
       )}
 
       {/* 상태 표시 */}
-      {isStale && (
-        <span className="text-xs text-yellow-400">
-          stale
-        </span>
-      )}
+      {isStale && <span className="text-xs text-yellow-400">stale</span>}
       {!settings.realTimePriceUpdates && !isStale && (
-        <span className="text-xs text-slate-400">
-          paused
-        </span>
+        <span className="text-xs text-slate-400">paused</span>
       )}
     </div>
   );

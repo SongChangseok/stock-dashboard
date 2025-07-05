@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { GoalType, GoalFormData, Goal } from '../../types/goals';
-import { Target, Home, GraduationCap, Shield, Plane, TrendingUp, MoreHorizontal } from 'lucide-react';
+import {
+  Target,
+  Home,
+  GraduationCap,
+  Shield,
+  Plane,
+  TrendingUp,
+  MoreHorizontal,
+} from 'lucide-react';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -16,7 +24,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
     targetAmount: '',
     targetDate: '',
     monthlyContribution: '',
-    category: ''
+    category: '',
   });
 
   const [errors, setErrors] = useState<Partial<GoalFormData>>({});
@@ -30,33 +38,72 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
         targetAmount: goal.targetAmount.toString(),
         targetDate: goal.targetDate,
         monthlyContribution: goal.monthlyContribution.toString(),
-        category: goal.category
+        category: goal.category,
       });
     }
   }, [goal]);
 
   const goalTypeOptions = [
-    { value: GoalType.RETIREMENT, label: 'Retirement', icon: TrendingUp, color: 'text-blue-400' },
-    { value: GoalType.HOUSE, label: 'House Purchase', icon: Home, color: 'text-green-400' },
-    { value: GoalType.EDUCATION, label: 'Education', icon: GraduationCap, color: 'text-purple-400' },
-    { value: GoalType.EMERGENCY, label: 'Emergency Fund', icon: Shield, color: 'text-red-400' },
-    { value: GoalType.VACATION, label: 'Vacation', icon: Plane, color: 'text-cyan-400' },
-    { value: GoalType.INVESTMENT, label: 'Investment', icon: TrendingUp, color: 'text-yellow-400' },
-    { value: GoalType.OTHER, label: 'Other', icon: MoreHorizontal, color: 'text-gray-400' }
+    {
+      value: GoalType.RETIREMENT,
+      label: 'Retirement',
+      icon: TrendingUp,
+      color: 'text-blue-400',
+    },
+    {
+      value: GoalType.HOUSE,
+      label: 'House Purchase',
+      icon: Home,
+      color: 'text-green-400',
+    },
+    {
+      value: GoalType.EDUCATION,
+      label: 'Education',
+      icon: GraduationCap,
+      color: 'text-purple-400',
+    },
+    {
+      value: GoalType.EMERGENCY,
+      label: 'Emergency Fund',
+      icon: Shield,
+      color: 'text-red-400',
+    },
+    {
+      value: GoalType.VACATION,
+      label: 'Vacation',
+      icon: Plane,
+      color: 'text-cyan-400',
+    },
+    {
+      value: GoalType.INVESTMENT,
+      label: 'Investment',
+      icon: TrendingUp,
+      color: 'text-yellow-400',
+    },
+    {
+      value: GoalType.OTHER,
+      label: 'Other',
+      icon: MoreHorizontal,
+      color: 'text-gray-400',
+    },
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name as keyof GoalFormData]) {
       setErrors(prev => ({
         ...prev,
-        [name]: undefined
+        [name]: undefined,
       }));
     }
   };
@@ -82,8 +129,12 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
       }
     }
 
-    if (!formData.monthlyContribution || parseFloat(formData.monthlyContribution) < 0) {
-      newErrors.monthlyContribution = 'Monthly contribution must be 0 or greater';
+    if (
+      !formData.monthlyContribution ||
+      parseFloat(formData.monthlyContribution) < 0
+    ) {
+      newErrors.monthlyContribution =
+        'Monthly contribution must be 0 or greater';
     }
 
     setErrors(newErrors);
@@ -97,7 +148,9 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
     }
   };
 
-  const selectedGoalType = goalTypeOptions.find(option => option.value === formData.type);
+  const selectedGoalType = goalTypeOptions.find(
+    option => option.value === formData.type
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -127,7 +180,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
 
       {/* Goal Title */}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="title"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Goal Title
         </label>
         <input
@@ -148,7 +204,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
 
       {/* Goal Description */}
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="description"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Description (Optional)
         </label>
         <textarea
@@ -164,7 +223,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
 
       {/* Target Amount */}
       <div>
-        <label htmlFor="targetAmount" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="targetAmount"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Target Amount
         </label>
         <div className="relative">
@@ -190,7 +252,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
 
       {/* Target Date */}
       <div>
-        <label htmlFor="targetDate" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="targetDate"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Target Date
         </label>
         <input
@@ -210,7 +275,10 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
 
       {/* Monthly Contribution */}
       <div>
-        <label htmlFor="monthlyContribution" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="monthlyContribution"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Monthly Contribution
         </label>
         <div className="relative">
@@ -230,13 +298,18 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSubmit, onCancel }) => {
           />
         </div>
         {errors.monthlyContribution && (
-          <p className="mt-1 text-sm text-red-400">{errors.monthlyContribution}</p>
+          <p className="mt-1 text-sm text-red-400">
+            {errors.monthlyContribution}
+          </p>
         )}
       </div>
 
       {/* Category */}
       <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
+        <label
+          htmlFor="category"
+          className="block text-sm font-medium text-gray-300 mb-2"
+        >
           Category (Optional)
         </label>
         <input

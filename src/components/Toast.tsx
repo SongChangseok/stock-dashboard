@@ -23,6 +23,13 @@ const Toast: React.FC<ToastProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onClose(id);
+    }, 300);
+  };
+
   useEffect(() => {
     // Trigger enter animation
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -36,14 +43,7 @@ const Toast: React.FC<ToastProps> = ({
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration]);
-
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onClose(id);
-    }, 300);
-  };
+  }, [duration, handleClose]);
 
   const getIcon = () => {
     switch (type) {
@@ -92,21 +92,17 @@ const Toast: React.FC<ToastProps> = ({
         `}
       >
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            {getIcon()}
-          </div>
-          
+          <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
+
           <div className="flex-1 min-w-0">
-            <h4 className="text-white font-semibold text-sm mb-1">
-              {title}
-            </h4>
+            <h4 className="text-white font-semibold text-sm mb-1">{title}</h4>
             {message && (
               <p className="text-slate-300 text-xs leading-relaxed">
                 {message}
               </p>
             )}
           </div>
-          
+
           <button
             onClick={handleClose}
             className="flex-shrink-0 ml-2 p-1 rounded-full hover:bg-white/10 transition-colors"

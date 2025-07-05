@@ -48,19 +48,16 @@ export interface NewsFilters {
   stocks?: string[];
 }
 
-export type NewsCategory = 
-  | 'business' 
-  | 'entertainment' 
-  | 'general' 
-  | 'health' 
-  | 'science' 
-  | 'sports' 
+export type NewsCategory =
+  | 'business'
+  | 'entertainment'
+  | 'general'
+  | 'health'
+  | 'science'
+  | 'sports'
   | 'technology';
 
-export type NewsSortBy = 
-  | 'relevancy' 
-  | 'popularity' 
-  | 'publishedAt';
+export type NewsSortBy = 'relevancy' | 'popularity' | 'publishedAt';
 
 export interface StockNewsRequest {
   ticker: string;

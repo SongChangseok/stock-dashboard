@@ -1,4 +1,10 @@
-import { NewsApiResponse, NewsArticle, NewsFilters, StockNewsRequest, NewsApiConfig } from '../types/news';
+import {
+  NewsApiResponse,
+  NewsArticle,
+  NewsFilters,
+  StockNewsRequest,
+  NewsApiConfig,
+} from '../types/news';
 
 class NewsApiService {
   private config: NewsApiConfig;
@@ -7,14 +13,18 @@ class NewsApiService {
 
   constructor() {
     this.config = {
-      apiKey: import.meta.env.VITE_NEWS_API_KEY || '',
-      baseUrl: import.meta.env.VITE_NEWS_API_BASE_URL || 'https://newsapi.org/v2',
+      apiKey: (import.meta as any).env?.VITE_NEWS_API_KEY || '',
+      baseUrl:
+        (import.meta as any).env?.VITE_NEWS_API_BASE_URL ||
+        'https://newsapi.org/v2',
       defaultPageSize: 20,
-      maxCacheAge: 10 * 60 * 1000 // 10 minutes
+      maxCacheAge: 10 * 60 * 1000, // 10 minutes
     };
 
     if (!this.config.apiKey) {
-      console.warn('News API key not found. Please set VITE_NEWS_API_KEY in your environment variables.');
+      console.warn(
+        'News API key not found. Please set VITE_NEWS_API_KEY in your environment variables.'
+      );
     }
   }
 
@@ -37,28 +47,33 @@ class NewsApiService {
   private setCache(key: string, data: any): void {
     this.cache.set(key, {
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
-  private async makeRequest(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+  private async makeRequest(
+    endpoint: string,
+    params: Record<string, any> = {}
+  ): Promise<any> {
     if (!this.config.apiKey) {
-      throw new Error('News API key is required. Please set VITE_NEWS_API_KEY environment variable.');
+      throw new Error(
+        'News API key is required. Please set VITE_NEWS_API_KEY environment variable.'
+      );
     }
 
     const cacheKey = this.getCacheKey({ endpoint, params });
     const cached = this.getFromCache(cacheKey);
-    
+
     if (cached) {
       return cached;
     }
 
     const url = new URL(`${this.config.baseUrl}${endpoint}`);
-    
+
     // Add API key and other params
     const searchParams = {
       apiKey: this.config.apiKey,
-      ...params
+      ...params,
     };
 
     Object.entries(searchParams).forEach(([key, value]) => {
@@ -86,7 +101,7 @@ class NewsApiService {
       }
 
       const data = await response.json();
-      
+
       if (data.status === 'error') {
         throw new Error(data.message || 'API returned an error');
       }
@@ -111,23 +126,51 @@ class NewsApiService {
         publishedAt: article.publishedAt,
         source: {
           id: article.source?.id || null,
-          name: article.source?.name || 'Unknown Source'
+          name: article.source?.name || 'Unknown Source',
         },
         content: article.content,
         author: article.author,
-        sentiment: this.analyzeSentiment(article.title + ' ' + (article.description || '')),
-        relevanceScore: this.calculateRelevanceScore(article)
+        sentiment: this.analyzeSentiment(
+          article.title + ' ' + (article.description || '')
+        ),
+        relevanceScore: this.calculateRelevanceScore(article),
       }));
   }
 
   private analyzeSentiment(text: string): 'positive' | 'negative' | 'neutral' {
-    const positiveWords = ['gain', 'rise', 'up', 'bull', 'profit', 'growth', 'surge', 'rally', 'boost', 'strong'];
-    const negativeWords = ['fall', 'drop', 'down', 'bear', 'loss', 'decline', 'crash', 'plunge', 'weak', 'sell'];
-    
+    const positiveWords = [
+      'gain',
+      'rise',
+      'up',
+      'bull',
+      'profit',
+      'growth',
+      'surge',
+      'rally',
+      'boost',
+      'strong',
+    ];
+    const negativeWords = [
+      'fall',
+      'drop',
+      'down',
+      'bear',
+      'loss',
+      'decline',
+      'crash',
+      'plunge',
+      'weak',
+      'sell',
+    ];
+
     const lowerText = text.toLowerCase();
-    const positiveCount = positiveWords.filter(word => lowerText.includes(word)).length;
-    const negativeCount = negativeWords.filter(word => lowerText.includes(word)).length;
-    
+    const positiveCount = positiveWords.filter(word =>
+      lowerText.includes(word)
+    ).length;
+    const negativeCount = negativeWords.filter(word =>
+      lowerText.includes(word)
+    ).length;
+
     if (positiveCount > negativeCount) return 'positive';
     if (negativeCount > positiveCount) return 'negative';
     return 'neutral';
@@ -135,22 +178,32 @@ class NewsApiService {
 
   private calculateRelevanceScore(article: any): number {
     let score = 50; // Base score
-    
+
     // Boost score for financial sources
-    const financialSources = ['reuters', 'bloomberg', 'cnbc', 'marketwatch', 'wsj'];
-    if (financialSources.some(source => 
-      article.source?.name?.toLowerCase().includes(source) ||
-      article.url?.toLowerCase().includes(source)
-    )) {
+    const financialSources = [
+      'reuters',
+      'bloomberg',
+      'cnbc',
+      'marketwatch',
+      'wsj',
+    ];
+    if (
+      financialSources.some(
+        source =>
+          article.source?.name?.toLowerCase().includes(source) ||
+          article.url?.toLowerCase().includes(source)
+      )
+    ) {
       score += 30;
     }
-    
+
     // Boost score for recent articles
     const publishedDate = new Date(article.publishedAt);
-    const hoursSincePublished = (Date.now() - publishedDate.getTime()) / (1000 * 60 * 60);
+    const hoursSincePublished =
+      (Date.now() - publishedDate.getTime()) / (1000 * 60 * 60);
     if (hoursSincePublished < 6) score += 20;
     else if (hoursSincePublished < 24) score += 10;
-    
+
     return Math.min(100, Math.max(0, score));
   }
 
@@ -164,28 +217,31 @@ class NewsApiService {
       sources: filters.sources?.join(','),
       language: filters.language || 'en',
       pageSize: Math.min(filters.pageSize || this.config.defaultPageSize, 100),
-      page: filters.page || 1
+      page: filters.page || 1,
     };
 
-    const response: NewsApiResponse = await this.makeRequest('/everything', params);
+    const response: NewsApiResponse = await this.makeRequest(
+      '/everything',
+      params
+    );
     return this.processArticles(response.articles || []);
   }
 
   async getStockNews(request: StockNewsRequest): Promise<NewsArticle[]> {
     const { ticker, limit = 20, fromDate, toDate } = request;
-    
+
     // Create comprehensive search query for the stock
     const companyNames: Record<string, string> = {
-      'AAPL': 'Apple',
-      'GOOGL': 'Google Alphabet',
-      'MSFT': 'Microsoft',
-      'AMZN': 'Amazon',
-      'TSLA': 'Tesla',
-      'META': 'Meta Facebook',
-      'NVDA': 'NVIDIA',
-      'JPM': 'JPMorgan',
-      'JNJ': 'Johnson Johnson',
-      'V': 'Visa'
+      AAPL: 'Apple',
+      GOOGL: 'Google Alphabet',
+      MSFT: 'Microsoft',
+      AMZN: 'Amazon',
+      TSLA: 'Tesla',
+      META: 'Meta Facebook',
+      NVDA: 'NVIDIA',
+      JPM: 'JPMorgan',
+      JNJ: 'Johnson Johnson',
+      V: 'Visa',
     };
 
     const companyName = companyNames[ticker.toUpperCase()] || ticker;
@@ -197,16 +253,19 @@ class NewsApiService {
       language: 'en',
       pageSize: Math.min(limit, 100),
       from: fromDate,
-      to: toDate
+      to: toDate,
     };
 
-    const response: NewsApiResponse = await this.makeRequest('/everything', params);
+    const response: NewsApiResponse = await this.makeRequest(
+      '/everything',
+      params
+    );
     const articles = this.processArticles(response.articles || []);
-    
+
     // Add stock ticker to articles
     return articles.map(article => ({
       ...article,
-      relatedStocks: [ticker.toUpperCase()]
+      relatedStocks: [ticker.toUpperCase()],
     }));
   }
 
@@ -215,22 +274,31 @@ class NewsApiService {
       category: 'business',
       country: 'us',
       pageSize: Math.min(limit, 100),
-      sortBy: 'publishedAt'
+      sortBy: 'publishedAt',
     };
 
-    const response: NewsApiResponse = await this.makeRequest('/top-headlines', params);
+    const response: NewsApiResponse = await this.makeRequest(
+      '/top-headlines',
+      params
+    );
     return this.processArticles(response.articles || []);
   }
 
-  async getNewsByCategory(category: string, limit: number = 20): Promise<NewsArticle[]> {
+  async getNewsByCategory(
+    category: string,
+    limit: number = 20
+  ): Promise<NewsArticle[]> {
     const params = {
       category,
       country: 'us',
       pageSize: Math.min(limit, 100),
-      sortBy: 'publishedAt'
+      sortBy: 'publishedAt',
     };
 
-    const response: NewsApiResponse = await this.makeRequest('/top-headlines', params);
+    const response: NewsApiResponse = await this.makeRequest(
+      '/top-headlines',
+      params
+    );
     return this.processArticles(response.articles || []);
   }
 
@@ -241,7 +309,7 @@ class NewsApiService {
   getCacheStats(): { size: number; keys: string[] } {
     return {
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 }

@@ -1,12 +1,18 @@
 // Alpha Vantage API 서비스
 
 import { AlphaVantageResponse, StockQuote, ApiError } from '../types/api';
-import { API_CONFIG, buildApiUrl, isValidApiResponse, parseApiError } from '../utils/apiConfig';
+import {
+  API_CONFIG,
+  buildApiUrl,
+  isValidApiResponse,
+  parseApiError,
+} from '../utils/apiConfig';
 import { handleApiError, retryOperation } from '../utils/errorHandling';
 
 class StockApiService {
   private rateLimitTracker: Map<string, number> = new Map();
-  private cache: Map<string, { data: StockQuote; timestamp: number }> = new Map();
+  private cache: Map<string, { data: StockQuote; timestamp: number }> =
+    new Map();
   private readonly CACHE_DURATION = 30000; // 30 seconds
 
   // 단일 주식 실시간 가격 조회
@@ -21,8 +27,11 @@ class StockApiService {
       // Rate limiting 체크
       this.checkRateLimit(symbol);
 
-      const url = buildApiUrl(API_CONFIG.ALPHA_VANTAGE.ENDPOINTS.GLOBAL_QUOTE, symbol);
-      
+      const url = buildApiUrl(
+        API_CONFIG.ALPHA_VANTAGE.ENDPOINTS.GLOBAL_QUOTE,
+        symbol
+      );
+
       const response = await retryOperation(
         () => this.fetchWithTimeout(url),
         API_CONFIG.MAX_RETRY_ATTEMPTS,
@@ -47,15 +56,17 @@ class StockApiService {
   }
 
   // 여러 주식 가격 일괄 조회
-  async getMultipleQuotes(symbols: string[]): Promise<Map<string, StockQuote | Error>> {
+  async getMultipleQuotes(
+    symbols: string[]
+  ): Promise<Map<string, StockQuote | Error>> {
     const results = new Map<string, StockQuote | Error>();
-    
+
     // 병렬 처리를 위해 배치로 나누기 (Rate limit 고려)
     const batchSize = 3;
     const batches = this.createBatches(symbols, batchSize);
 
     for (const batch of batches) {
-      const promises = batch.map(async (symbol) => {
+      const promises = batch.map(async symbol => {
         try {
           const quote = await this.getStockQuote(symbol);
           return { symbol, data: quote };
@@ -65,8 +76,8 @@ class StockApiService {
       });
 
       const batchResults = await Promise.allSettled(promises);
-      
-      batchResults.forEach((result) => {
+
+      batchResults.forEach(result => {
         if (result.status === 'fulfilled') {
           const { symbol, data, error } = result.value;
           results.set(symbol, error || data);
@@ -87,7 +98,7 @@ class StockApiService {
   // API 응답을 StockQuote 형태로 변환
   private transformApiResponse(data: AlphaVantageResponse): StockQuote {
     const quote = data['Global Quote'];
-    
+
     return {
       symbol: quote['01. symbol'],
       price: parseFloat(quote['05. price']),
@@ -120,10 +131,13 @@ class StockApiService {
   // Rate limiting 체크
   private checkRateLimit(symbol: string): void {
     const lastRequest = this.rateLimitTracker.get(symbol) || 0;
-    const minInterval = 60000 / API_CONFIG.ALPHA_VANTAGE.RATE_LIMITS.REQUESTS_PER_MINUTE;
-    
+    const minInterval =
+      60000 / API_CONFIG.ALPHA_VANTAGE.RATE_LIMITS.REQUESTS_PER_MINUTE;
+
     if (Date.now() - lastRequest < minInterval) {
-      throw new Error('Rate limit exceeded. Please wait before making another request.');
+      throw new Error(
+        'Rate limit exceeded. Please wait before making another request.'
+      );
     }
   }
 
@@ -147,7 +161,10 @@ class StockApiService {
   }
 
   // 타임아웃이 있는 fetch
-  private async fetchWithTimeout(url: string, timeout: number = 10000): Promise<Response> {
+  private async fetchWithTimeout(
+    url: string,
+    timeout: number = 10000
+  ): Promise<Response> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
@@ -155,7 +172,7 @@ class StockApiService {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 
