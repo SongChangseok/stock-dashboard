@@ -3,6 +3,8 @@ import StockDashboard from './components/StockDashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { SettingsProvider } from './contexts/SettingsContext';
+import { StockPriceProvider } from './contexts/StockPriceContext';
 import './index.css';
 
 const App: React.FC = () => {
@@ -10,9 +12,13 @@ const App: React.FC = () => {
     <div className="App">
       <ErrorBoundary>
         <ToastProvider>
-          <PortfolioProvider>
-            <StockDashboard />
-          </PortfolioProvider>
+          <SettingsProvider>
+            <PortfolioProvider>
+              <StockPriceProvider>
+                <StockDashboard />
+              </StockPriceProvider>
+            </PortfolioProvider>
+          </SettingsProvider>
         </ToastProvider>
       </ErrorBoundary>
     </div>
