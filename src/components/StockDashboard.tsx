@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, History, TrendingUp } from 'lucide-react';
 import { Stock, StockFormData } from '../types/portfolio';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { usePortfolioSnapshot } from '../hooks/usePortfolioSnapshot';
 import { getColorPalette } from '../utils/portfolio';
 import Header from './layout/Header';
 import PortfolioSummary from './portfolio/PortfolioSummary';
 import PortfolioChart from './portfolio/PortfolioChart';
 import PortfolioTable from './portfolio/PortfolioTable';
 import PortfolioAnalytics from './portfolio/PortfolioAnalytics';
+import PortfolioHistoryChart from './history/PortfolioHistoryChart';
+import PerformanceMetrics from './history/PerformanceMetrics';
 import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 
 const StockDashboard: React.FC = () => {
   const { state, addStock, updateStock, deleteStock, importStocks, exportStocks, clearError } = usePortfolio();
   const { stocks, metrics, loading, error } = state;
+  const { createSnapshot, canTakeSnapshot, lastSnapshotDate, snapshotCount } = usePortfolioSnapshot();
   
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingStockId, setEditingStockId] = useState<number | null>(null);
@@ -169,6 +173,43 @@ const StockDashboard: React.FC = () => {
         <PortfolioChart data={getPieChartData()} />
 
         <PortfolioAnalytics />
+
+        {/* Portfolio History Section */}
+        <div className="mb-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <History className="text-spotify-green" size={24} />
+              <div>
+                <h2 className="text-2xl font-bold text-white">Portfolio History</h2>
+                <p className="text-gray-400">Performance tracking over time</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-sm text-gray-400">
+                <span className="font-medium">{snapshotCount}</span> snapshots
+                {lastSnapshotDate && (
+                  <span className="ml-2">• Last: {new Date(lastSnapshotDate).toLocaleDateString()}</span>
+                )}
+              </div>
+              <button
+                onClick={createSnapshot}
+                disabled={!canTakeSnapshot}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                  canTakeSnapshot
+                    ? 'bg-spotify-green hover:bg-spotify-green-hover text-white'
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <TrendingUp size={16} />
+                Take Snapshot
+              </button>
+            </div>
+          </div>
+
+          <PortfolioHistoryChart height={300} />
+          
+          <PerformanceMetrics />
+        </div>
 
         <PortfolioTable 
           stocks={stocks}

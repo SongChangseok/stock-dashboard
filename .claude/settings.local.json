@@ -27,7 +27,9 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(git push:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": []
   }

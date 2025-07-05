@@ -8,6 +8,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { StockPriceProvider } from './contexts/StockPriceContext';
 import { GoalsProvider } from './contexts/GoalsContext';
+import { PortfolioHistoryProvider } from './contexts/PortfolioHistoryContext';
 import './index.css';
 
 const App: React.FC = () => {
@@ -18,14 +19,16 @@ const App: React.FC = () => {
           <SettingsProvider>
             <PortfolioProvider>
               <StockPriceProvider>
-                <GoalsProvider>
-                  <Router>
-                    <Routes>
-                      <Route path="/" element={<StockDashboard />} />
-                      <Route path="/goals" element={<GoalsPage />} />
-                    </Routes>
-                  </Router>
-                </GoalsProvider>
+                <PortfolioHistoryProvider>
+                  <GoalsProvider>
+                    <Router>
+                      <Routes>
+                        <Route path="/" element={<StockDashboard />} />
+                        <Route path="/goals" element={<GoalsPage />} />
+                      </Routes>
+                    </Router>
+                  </GoalsProvider>
+                </PortfolioHistoryProvider>
               </StockPriceProvider>
             </PortfolioProvider>
           </SettingsProvider>
