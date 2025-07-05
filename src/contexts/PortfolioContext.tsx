@@ -1,11 +1,8 @@
 import React, { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { Stock, StockFormData, PortfolioMetrics, ExportData } from '../types/portfolio';
-import { 
-  calculatePortfolioMetrics, 
-  saveToLocalStorage, 
-  loadFromLocalStorage,
-  validatePortfolioData 
-} from '../utils/portfolio';
+import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
+import { saveToLocalStorage, loadFromLocalStorage } from '../utils/portfolio';
+import { validatePortfolioData } from '../utils/validation';
 import { useToast } from './ToastContext';
 
 // Action types
@@ -50,6 +47,8 @@ const initialState: PortfolioState = {
     totalValue: 0,
     totalProfitLoss: 0,
     profitLossPercentage: 0,
+    totalInvestment: 0,
+    totalMarketValue: 0,
   },
   loading: false,
   error: null,
@@ -125,13 +124,26 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [state, dispatch] = useReducer(portfolioReducer, initialState);
   const { addToast } = useToast();
 
-  // Initialize metrics on mount
+  // Initialize data from localStorage on mount
   useEffect(() => {
-    const metrics = updateMetrics(state.stocks);
-    if (JSON.stringify(metrics) !== JSON.stringify(state.metrics)) {
-      dispatch({ type: 'SET_STOCKS', payload: state.stocks });
-    }
-  }, []);
+    const loadInitialData = () => {
+      try {
+        const savedData = loadFromLocalStorage<Stock[]>('portfolio-stocks');
+        if (savedData && Array.isArray(savedData) && savedData.length > 0) {
+          dispatch({ type: 'SET_STOCKS', payload: savedData });
+        } else {
+          // If no saved data, use default stocks and save them
+          dispatch({ type: 'SET_STOCKS', payload: state.stocks });
+          saveToLocalStorage('portfolio-stocks', state.stocks);
+        }
+      } catch (error) {
+        // If loading fails, use default stocks
+        dispatch({ type: 'SET_STOCKS', payload: state.stocks });
+      }
+    };
+    
+    loadInitialData();
+  }, []); // Empty dependency array to run only once on mount
 
   // Add stock
   const addStock = useCallback((formData: StockFormData) => {

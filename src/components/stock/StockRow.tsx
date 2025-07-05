@@ -1,6 +1,8 @@
 import React from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 import { Stock } from '../../types/portfolio';
+import { calculateProfitLoss, calculateProfitLossPercent, calculateMarketValue, isProfitable } from '../../utils/stockHelpers';
+import { formatPrice, formatPercentage } from '../../utils/formatters';
 
 interface StockRowProps {
   stock: Stock;
@@ -9,32 +11,25 @@ interface StockRowProps {
 }
 
 const StockRow: React.FC<StockRowProps> = ({ stock, onEdit, onDelete }) => {
-  const calculateProfitLoss = (stock: Stock): number => {
-    return (stock.currentPrice - stock.buyPrice) * stock.quantity;
-  };
-
-  const calculateProfitLossPercent = (stock: Stock): number => {
-    return ((stock.currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
-  };
-
   const profitLoss = calculateProfitLoss(stock);
   const profitLossPercent = calculateProfitLossPercent(stock);
-  const isProfit = profitLoss >= 0;
+  const marketValue = calculateMarketValue(stock);
+  const isProfit = isProfitable(stock);
 
   return (
     <tr className="hover:bg-white/5 transition-all duration-200">
       <td className="px-8 py-6">
         <div className="font-bold text-white text-lg">{stock.ticker}</div>
       </td>
-      <td className="px-8 py-6 text-slate-300 font-medium">${stock.buyPrice.toFixed(2)}</td>
-      <td className="px-8 py-6 text-slate-300 font-medium">${stock.currentPrice.toFixed(2)}</td>
+      <td className="px-8 py-6 text-slate-300 font-medium">{formatPrice(stock.buyPrice)}</td>
+      <td className="px-8 py-6 text-slate-300 font-medium">{formatPrice(stock.currentPrice)}</td>
       <td className="px-8 py-6 text-slate-300 font-medium">{stock.quantity}</td>
-      <td className="px-8 py-6 text-white font-semibold">${(stock.currentPrice * stock.quantity).toFixed(2)}</td>
+      <td className="px-8 py-6 text-white font-semibold">{formatPrice(marketValue)}</td>
       <td className={`px-8 py-6 font-semibold ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
-        ${profitLoss.toFixed(2)}
+        {formatPrice(profitLoss)}
       </td>
       <td className={`px-8 py-6 font-semibold ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
-        {profitLossPercent.toFixed(2)}%
+        {formatPercentage(profitLossPercent)}
       </td>
       <td className="px-8 py-6">
         <div className="flex space-x-3">

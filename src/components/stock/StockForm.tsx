@@ -1,5 +1,6 @@
-import React from 'react';
-import { StockFormData } from '../../types/portfolio';
+import React, { useState } from 'react';
+import { StockFormData, ValidationError } from '../../types/portfolio';
+import { validateStockFormData } from '../../utils/validation';
 
 interface StockFormProps {
   formData: StockFormData;
@@ -16,15 +17,33 @@ const StockForm: React.FC<StockFormProps> = ({
   onCancel, 
   isEditing 
 }) => {
+  const [errors, setErrors] = useState<ValidationError[]>([]);
+
   const handleInputChange = (field: keyof StockFormData, value: string) => {
     onFormChange({ ...formData, [field]: value });
+    
+    // Clear specific field error when user starts typing
+    setErrors(prev => prev.filter(error => error.field !== field));
   };
 
   const handleSubmit = () => {
-    if (!formData.ticker || !formData.buyPrice || !formData.currentPrice || !formData.quantity) {
+    const validationErrors = validateStockFormData(formData);
+    
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
       return;
     }
+    
+    setErrors([]);
     onSubmit();
+  };
+
+  const getFieldError = (field: string): string | undefined => {
+    return errors.find(error => error.field === field)?.message;
+  };
+
+  const hasError = (field: string): boolean => {
+    return errors.some(error => error.field === field);
   };
 
   return (
@@ -35,9 +54,14 @@ const StockForm: React.FC<StockFormProps> = ({
           type="text"
           value={formData.ticker}
           onChange={(e) => handleInputChange('ticker', e.target.value)}
-          className="w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+          className={`w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all duration-200 ${
+            hasError('ticker') ? 'focus:ring-red-500 border-red-500' : 'focus:ring-primary-500'
+          }`}
           placeholder="AAPL"
         />
+        {getFieldError('ticker') && (
+          <p className="text-red-400 text-sm mt-1">{getFieldError('ticker')}</p>
+        )}
       </div>
       
       <div>
@@ -47,9 +71,14 @@ const StockForm: React.FC<StockFormProps> = ({
           step="0.01"
           value={formData.buyPrice}
           onChange={(e) => handleInputChange('buyPrice', e.target.value)}
-          className="w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+          className={`w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all duration-200 ${
+            hasError('buyPrice') ? 'focus:ring-red-500 border-red-500' : 'focus:ring-primary-500'
+          }`}
           placeholder="150.00"
         />
+        {getFieldError('buyPrice') && (
+          <p className="text-red-400 text-sm mt-1">{getFieldError('buyPrice')}</p>
+        )}
       </div>
       
       <div>
@@ -59,9 +88,14 @@ const StockForm: React.FC<StockFormProps> = ({
           step="0.01"
           value={formData.currentPrice}
           onChange={(e) => handleInputChange('currentPrice', e.target.value)}
-          className="w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+          className={`w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all duration-200 ${
+            hasError('currentPrice') ? 'focus:ring-red-500 border-red-500' : 'focus:ring-primary-500'
+          }`}
           placeholder="185.50"
         />
+        {getFieldError('currentPrice') && (
+          <p className="text-red-400 text-sm mt-1">{getFieldError('currentPrice')}</p>
+        )}
       </div>
       
       <div>
@@ -70,9 +104,14 @@ const StockForm: React.FC<StockFormProps> = ({
           type="number"
           value={formData.quantity}
           onChange={(e) => handleInputChange('quantity', e.target.value)}
-          className="w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+          className={`w-full glass-card text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 transition-all duration-200 ${
+            hasError('quantity') ? 'focus:ring-red-500 border-red-500' : 'focus:ring-primary-500'
+          }`}
           placeholder="10"
         />
+        {getFieldError('quantity') && (
+          <p className="text-red-400 text-sm mt-1">{getFieldError('quantity')}</p>
+        )}
       </div>
       
       <div className="flex space-x-4 pt-4">

@@ -7,6 +7,7 @@ import Header from './layout/Header';
 import PortfolioSummary from './portfolio/PortfolioSummary';
 import PortfolioChart from './portfolio/PortfolioChart';
 import PortfolioTable from './portfolio/PortfolioTable';
+import PortfolioAnalytics from './portfolio/PortfolioAnalytics';
 import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 
@@ -166,6 +167,8 @@ const StockDashboard: React.FC = () => {
         />
 
         <PortfolioChart data={getPieChartData()} />
+
+        <PortfolioAnalytics />
 
         <PortfolioTable 
           stocks={stocks}

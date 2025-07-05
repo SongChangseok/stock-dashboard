@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { PortfolioData } from '../../types/portfolio';
+import { formatCurrency, formatPercentage } from '../../utils/formatters';
 
 interface PortfolioChartProps {
   data: PortfolioData[];
@@ -20,7 +21,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ data }) => {
               cx="50%"
               cy="50%"
               labelLine={false}
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }) => `${name} ${formatPercentage(percent * 100, 0)}`}
               outerRadius={100}
               fill="#8884d8"
               dataKey="value"
@@ -32,7 +33,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ data }) => {
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Value']}
+              formatter={(value) => [formatCurrency(Number(value)), 'Value']}
               contentStyle={{
                 backgroundColor: 'rgba(15, 23, 42, 0.9)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',

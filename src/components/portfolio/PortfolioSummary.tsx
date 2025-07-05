@@ -1,5 +1,6 @@
 import React from 'react';
 import { DollarSign, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 
 interface PortfolioSummaryProps {
   totalValue: number;
@@ -20,7 +21,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <p className="text-slate-400 text-sm font-medium mb-2">Total Portfolio Value</p>
-            <p className="text-3xl font-bold gradient-text-secondary">${totalValue.toFixed(2)}</p>
+            <p className="text-3xl font-bold gradient-text-secondary">{formatCurrency(totalValue)}</p>
           </div>
           <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center">
             <DollarSign className="text-white" size={24} />
@@ -45,7 +46,7 @@ const PortfolioSummary: React.FC<PortfolioSummaryProps> = ({
           <div>
             <p className="text-slate-400 text-sm font-medium mb-2">Total P&L</p>
             <p className={`text-3xl font-bold ${isProfit ? 'text-emerald-400' : 'text-red-400'}`}>
-              ${totalProfitLoss.toFixed(2)}
+              {formatCurrency(totalProfitLoss)}
             </p>
           </div>
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
