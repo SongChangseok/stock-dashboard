@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import StockDashboard from './components/StockDashboard';
 import GoalsPage from './components/goals/GoalsPage';
+import NewsPage from './components/news/NewsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -25,6 +26,7 @@ const App: React.FC = () => {
                       <Routes>
                         <Route path="/" element={<StockDashboard />} />
                         <Route path="/goals" element={<GoalsPage />} />
+                        <Route path="/news" element={<NewsPage />} />
                       </Routes>
                     </Router>
                   </GoalsProvider>

@@ -11,6 +11,7 @@ import PortfolioTable from './portfolio/PortfolioTable';
 import PortfolioAnalytics from './portfolio/PortfolioAnalytics';
 import PortfolioHistoryChart from './history/PortfolioHistoryChart';
 import PerformanceMetrics from './history/PerformanceMetrics';
+import PortfolioNewsSection from './news/PortfolioNewsSection';
 import Modal from './common/Modal';
 import StockForm from './stock/StockForm';
 
@@ -210,6 +211,9 @@ const StockDashboard: React.FC = () => {
           
           <PerformanceMetrics />
         </div>
+
+        {/* Portfolio News Section */}
+        <PortfolioNewsSection maxArticles={4} compact={true} />
 
         <PortfolioTable 
           stocks={stocks}

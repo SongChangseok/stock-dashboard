@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, BarChart3, Download, Upload, Target } from 'lucide-react';
+import { Plus, BarChart3, Download, Upload, Target, Newspaper } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface HeaderProps {
@@ -47,6 +47,17 @@ const Header: React.FC<HeaderProps> = ({ onAddStock, onImport, onExport }) => {
           >
             <Target size={18} />
             Goals
+          </Link>
+          <Link
+            to="/news"
+            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              location.pathname === '/news'
+                ? 'bg-spotify-green text-white'
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            <Newspaper size={18} />
+            News
           </Link>
         </nav>
         
