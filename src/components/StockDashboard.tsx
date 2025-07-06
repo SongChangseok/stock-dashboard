@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Upload, History, TrendingUp } from 'lucide-react';
+import { Upload, History, TrendingUp, BarChart3 } from 'lucide-react';
 import { Stock, StockFormData } from '../types/portfolio';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useMultiPortfolio } from '../contexts/MultiPortfolioContext';
 import { usePortfolioSnapshot } from '../hooks/usePortfolioSnapshot';
 import { getColorPalette } from '../utils/portfolio';
 import Header from './layout/Header';
+import PortfolioSelector from './portfolio/PortfolioSelector';
+import PortfolioComparisonChart from './portfolio/PortfolioComparisonChart';
 import PortfolioSummary from './portfolio/PortfolioSummary';
 import PortfolioChart from './portfolio/PortfolioChart';
 import PortfolioTable from './portfolio/PortfolioTable';
@@ -26,8 +29,22 @@ const StockDashboard: React.FC = () => {
     clearError,
   } = usePortfolio();
   const { stocks, metrics, loading, error } = state;
+  
+  const { 
+    getActivePortfolio, 
+    getPortfolioSummaries,
+    addStockToPortfolio,
+    updateStockInPortfolio,
+    removeStockFromPortfolio 
+  } = useMultiPortfolio();
+  
   const { createSnapshot, canTakeSnapshot, lastSnapshotDate, snapshotCount } =
     usePortfolioSnapshot();
+    
+  const [showComparison, setShowComparison] = useState(false);
+  
+  const activePortfolio = getActivePortfolio();
+  const portfolioSummaries = getPortfolioSummaries();
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingStockId, setEditingStockId] = useState<number | null>(null);
@@ -178,6 +195,36 @@ const StockDashboard: React.FC = () => {
           onImport={() => setShowImportModal(true)}
           onExport={handleExportData}
         />
+
+        {/* Portfolio Selector */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <PortfolioSelector 
+              className="flex-1"
+              showCreateButton={true}
+              showStats={true}
+            />
+            
+            {portfolioSummaries.length > 1 && (
+              <button
+                onClick={() => setShowComparison(!showComparison)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                  showComparison
+                    ? 'bg-spotify-green text-white'
+                    : 'glass-card-dark text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <BarChart3 size={16} />
+                {showComparison ? 'Hide' : 'Show'} Comparison
+              </button>
+            )}
+          </div>
+          
+          {/* Portfolio Comparison Chart */}
+          {showComparison && portfolioSummaries.length > 1 && (
+            <PortfolioComparisonChart className="mb-6" />
+          )}
+        </div>
 
         <PortfolioSummary
           totalValue={metrics.totalValue}

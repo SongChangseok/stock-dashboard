@@ -5,6 +5,7 @@ import GoalsPage from './components/goals/GoalsPage';
 import NewsPage from './components/news/NewsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import { PortfolioProvider } from './contexts/PortfolioContext';
+import { MultiPortfolioProvider } from './contexts/MultiPortfolioContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { StockPriceProvider } from './contexts/StockPriceContext';
@@ -18,21 +19,23 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <ToastProvider>
           <SettingsProvider>
-            <PortfolioProvider>
-              <StockPriceProvider>
-                <PortfolioHistoryProvider>
-                  <GoalsProvider>
-                    <Router>
-                      <Routes>
-                        <Route path="/" element={<StockDashboard />} />
-                        <Route path="/goals" element={<GoalsPage />} />
-                        <Route path="/news" element={<NewsPage />} />
-                      </Routes>
-                    </Router>
-                  </GoalsProvider>
-                </PortfolioHistoryProvider>
-              </StockPriceProvider>
-            </PortfolioProvider>
+            <MultiPortfolioProvider>
+              <PortfolioProvider>
+                <StockPriceProvider>
+                  <PortfolioHistoryProvider>
+                    <GoalsProvider>
+                      <Router>
+                        <Routes>
+                          <Route path="/" element={<StockDashboard />} />
+                          <Route path="/goals" element={<GoalsPage />} />
+                          <Route path="/news" element={<NewsPage />} />
+                        </Routes>
+                      </Router>
+                    </GoalsProvider>
+                  </PortfolioHistoryProvider>
+                </StockPriceProvider>
+              </PortfolioProvider>
+            </MultiPortfolioProvider>
           </SettingsProvider>
         </ToastProvider>
       </ErrorBoundary>

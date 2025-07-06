@@ -57,6 +57,55 @@ export interface PortfolioMetrics {
   riskAdjustedReturn?: number;
 }
 
+// Multi-portfolio management types
+export interface Portfolio {
+  id: string;
+  name: string;
+  description?: string;
+  stocks: Stock[];
+  createdAt: Date;
+  updatedAt: Date;
+  color?: string;
+  isDefault?: boolean;
+}
+
+export interface PortfolioSummary {
+  id: string;
+  name: string;
+  totalValue: number;
+  totalProfitLoss: number;
+  profitLossPercentage: number;
+  stockCount: number;
+  color?: string;
+  lastUpdated: Date;
+}
+
+export interface PortfolioComparison {
+  portfolios: PortfolioSummary[];
+  comparisonData: {
+    id: string;
+    name: string;
+    value: number;
+    profitLoss: number;
+    profitLossPercent: number;
+    sharpeRatio?: number;
+    volatility?: number;
+  }[];
+}
+
+export interface MultiPortfolioState {
+  portfolios: Portfolio[];
+  activePortfolioId: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+export interface PortfolioFormData {
+  name: string;
+  description?: string;
+  color?: string;
+}
+
 export interface StockCalculation {
   marketValue: number;
   profitLoss: number;
