@@ -26,11 +26,17 @@ npm run preview    # Preview production build locally
 ```
 
 ### Linting & Formatting
-This project uses ESLint with TypeScript support. Run `npm run lint` to check for code quality issues.
+```bash
+npm run format     # Format code with Prettier
+npm run format:check # Check formatting without changes
+npm run lint       # Run ESLint for code quality
+```
+
+This project uses ESLint with TypeScript support and Prettier for consistent code formatting.
 
 ## Architecture Overview
 
-Modern React application built with **Vite** + **TypeScript**, featuring real-time stock tracking, advanced analytics, and news integration.
+Modern React application built with **Vite** + **TypeScript**, featuring multi-portfolio management, real-time stock tracking, advanced analytics, and news integration.
 
 ### Application Structure
 ```
