@@ -9,11 +9,13 @@ import {
   FolderOpen,
   TrendingUp,
   TrendingDown,
+  Share2,
 } from 'lucide-react';
 import { useMultiPortfolio } from '../../contexts/MultiPortfolioContext';
 import { formatCurrency, formatPercent } from '../../utils/formatters';
 import Modal from '../common/Modal';
 import PortfolioForm from './PortfolioForm';
+import SharePortfolioModal from '../sharing/SharePortfolioModal';
 
 interface PortfolioSelectorProps {
   className?: string;
@@ -38,7 +40,11 @@ const PortfolioSelector: React.FC<PortfolioSelectorProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [editingPortfolioId, setEditingPortfolioId] = useState<string | null>(
+    null,
+  );
+  const [sharingPortfolioId, setSharingPortfolioId] = useState<string | null>(
     null,
   );
   const [actionMenuPortfolioId, setActionMenuPortfolioId] = useState<
@@ -73,6 +79,12 @@ const PortfolioSelector: React.FC<PortfolioSelectorProps> = ({
   const handleEdit = (portfolioId: string) => {
     setEditingPortfolioId(portfolioId);
     setIsEditModalOpen(true);
+    setActionMenuPortfolioId(null);
+  };
+
+  const handleShare = (portfolioId: string) => {
+    setSharingPortfolioId(portfolioId);
+    setIsShareModalOpen(true);
     setActionMenuPortfolioId(null);
   };
 
@@ -218,6 +230,13 @@ const PortfolioSelector: React.FC<PortfolioSelectorProps> = ({
                             Edit
                           </button>
                           <button
+                            onClick={() => handleShare(portfolio.id)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-all duration-200"
+                          >
+                            <Share2 size={14} />
+                            Share
+                          </button>
+                          <button
                             onClick={() => handleDuplicate(portfolio.id)}
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-all duration-200"
                           >
@@ -327,6 +346,18 @@ const PortfolioSelector: React.FC<PortfolioSelectorProps> = ({
           }}
         />
       </Modal>
+
+      {/* Share Portfolio Modal */}
+      {sharingPortfolioId && (
+        <SharePortfolioModal
+          isOpen={isShareModalOpen}
+          onClose={() => {
+            setIsShareModalOpen(false);
+            setSharingPortfolioId(null);
+          }}
+          portfolio={state.portfolios.find(p => p.id === sharingPortfolioId)!}
+        />
+      )}
     </div>
   );
 };

@@ -5,6 +5,7 @@ import GoalsPage from './components/goals/GoalsPage';
 import NewsPage from './components/news/NewsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import SharedPortfolioView from './components/sharing/SharedPortfolioView';
 import { AuthProvider } from './contexts/AuthContext';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { MultiPortfolioProvider } from './contexts/MultiPortfolioContext';
@@ -44,6 +45,7 @@ const App: React.FC = () => {
                                 <NewsPage />
                               </ProtectedRoute>
                             } />
+                            <Route path="/share/:shareId" element={<SharedPortfolioView />} />
                           </Routes>
                         </Router>
                       </GoalsProvider>
