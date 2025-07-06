@@ -4,6 +4,8 @@ import StockDashboard from './components/StockDashboard';
 import GoalsPage from './components/goals/GoalsPage';
 import NewsPage from './components/news/NewsPage';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import { AuthProvider } from './contexts/AuthContext';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { MultiPortfolioProvider } from './contexts/MultiPortfolioContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -17,27 +19,41 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <ErrorBoundary>
-        <ToastProvider>
-          <SettingsProvider>
-            <MultiPortfolioProvider>
-              <PortfolioProvider>
-                <StockPriceProvider>
-                  <PortfolioHistoryProvider>
-                    <GoalsProvider>
-                      <Router>
-                        <Routes>
-                          <Route path="/" element={<StockDashboard />} />
-                          <Route path="/goals" element={<GoalsPage />} />
-                          <Route path="/news" element={<NewsPage />} />
-                        </Routes>
-                      </Router>
-                    </GoalsProvider>
-                  </PortfolioHistoryProvider>
-                </StockPriceProvider>
-              </PortfolioProvider>
-            </MultiPortfolioProvider>
-          </SettingsProvider>
-        </ToastProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <SettingsProvider>
+              <MultiPortfolioProvider>
+                <PortfolioProvider>
+                  <StockPriceProvider>
+                    <PortfolioHistoryProvider>
+                      <GoalsProvider>
+                        <Router>
+                          <Routes>
+                            <Route path="/" element={
+                              <ProtectedRoute>
+                                <StockDashboard />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/goals" element={
+                              <ProtectedRoute>
+                                <GoalsPage />
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/news" element={
+                              <ProtectedRoute>
+                                <NewsPage />
+                              </ProtectedRoute>
+                            } />
+                          </Routes>
+                        </Router>
+                      </GoalsProvider>
+                    </PortfolioHistoryProvider>
+                  </StockPriceProvider>
+                </PortfolioProvider>
+              </MultiPortfolioProvider>
+            </SettingsProvider>
+          </ToastProvider>
+        </AuthProvider>
       </ErrorBoundary>
     </div>
   );

@@ -35,7 +35,8 @@
       "Bash(npm run lint)",
       "Bash(npm run format:*)",
       "Bash(mkdir:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }
