@@ -4,6 +4,8 @@ import React, {
   useReducer,
   useEffect,
   ReactNode,
+  useMemo,
+  useCallback,
 } from 'react';
 import {
   PortfolioSnapshot,
@@ -131,7 +133,7 @@ export const PortfolioHistoryProvider: React.FC<
     }
   }, [state.snapshots]);
 
-  const takeSnapshot = async (portfolioData: any): Promise<void> => {
+  const takeSnapshot = useCallback(async (portfolioData: any): Promise<void> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
 
@@ -174,9 +176,9 @@ export const PortfolioHistoryProvider: React.FC<
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to take snapshot' });
     }
-  };
+  }, []);
 
-  const getSnapshotsByDateRange = (
+  const getSnapshotsByDateRange = useCallback((
     startDate: string,
     endDate: string
   ): PortfolioSnapshot[] => {
@@ -187,9 +189,9 @@ export const PortfolioHistoryProvider: React.FC<
       const snapshotTime = snapshot.timestamp;
       return snapshotTime >= start && snapshotTime <= end;
     });
-  };
+  }, [state.snapshots]);
 
-  const calculateMetrics = (
+  const calculateMetrics = useCallback((
     snapshots: PortfolioSnapshot[]
   ): PerformanceMetrics => {
     if (snapshots.length < 2) {
@@ -327,9 +329,9 @@ export const PortfolioHistoryProvider: React.FC<
       sortino,
       calmarRatio,
     };
-  };
+  }, []);
 
-  const calculateDrawdowns = (
+  const calculateDrawdowns = useCallback((
     snapshots: PortfolioSnapshot[]
   ): DrawdownPeriod[] => {
     if (snapshots.length < 2) return [];
@@ -406,9 +408,9 @@ export const PortfolioHistoryProvider: React.FC<
     }
 
     return drawdowns;
-  };
+  }, []);
 
-  const getPerformanceForPeriod = (
+  const getPerformanceForPeriod = useCallback((
     period: TimeframeOption
   ): PortfolioSnapshot[] => {
     const now = new Date();
@@ -441,16 +443,29 @@ export const PortfolioHistoryProvider: React.FC<
     return state.snapshots.filter(
       snapshot => snapshot.timestamp >= startDate.getTime()
     );
-  };
+  }, [state.snapshots]);
 
-  const clearHistory = (): void => {
+  const clearHistory = useCallback((): void => {
     localStorage.removeItem('portfolioHistory');
     dispatch({ type: 'CLEAR_HISTORY' });
-  };
+  }, []);
 
-  const setError = (error: string | null): void => {
+  const setError = useCallback((error: string | null): void => {
     dispatch({ type: 'SET_ERROR', payload: error });
-  };
+  }, []);
+
+  const deleteSnapshot = useCallback((snapshotId: string): void => {
+    const updatedSnapshots = state.snapshots.filter(s => s.id !== snapshotId);
+    dispatch({ type: 'SET_SNAPSHOTS', payload: updatedSnapshots });
+  }, [state.snapshots]);
+
+  const exportSnapshots = useCallback(() => {
+    return {
+      snapshots: state.snapshots,
+      exportDate: new Date().toISOString(),
+      totalSnapshots: state.snapshots.length,
+    };
+  }, [state.snapshots]);
 
   // Auto-calculate metrics when snapshots change
   useEffect(() => {
@@ -462,7 +477,7 @@ export const PortfolioHistoryProvider: React.FC<
     }
   }, [state.snapshots]);
 
-  const value: PortfolioHistoryContextType = {
+  const value: PortfolioHistoryContextType = useMemo(() => ({
     state,
     takeSnapshot,
     getSnapshotsByDateRange,
@@ -471,7 +486,20 @@ export const PortfolioHistoryProvider: React.FC<
     getPerformanceForPeriod,
     clearHistory,
     setError,
-  };
+    deleteSnapshot,
+    exportSnapshots,
+  }), [
+    state,
+    takeSnapshot,
+    getSnapshotsByDateRange,
+    calculateMetrics,
+    calculateDrawdowns,
+    getPerformanceForPeriod,
+    clearHistory,
+    setError,
+    deleteSnapshot,
+    exportSnapshots,
+  ]);
 
   return (
     <PortfolioHistoryContext.Provider value={value}>
