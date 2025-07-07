@@ -39,7 +39,8 @@
       "Bash(sed:*)",
       "Bash(gh issue create:*)",
       "Bash(gh auth:*)",
-      "Bash(export:*)"
+      "Bash(export:*)",
+      "Bash(timeout 10 npm run dev)"
     ],
     "deny": []
   }

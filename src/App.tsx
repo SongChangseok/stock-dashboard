@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import StockDashboard from './components/StockDashboard';
 import GoalsPage from './components/goals/GoalsPage';
@@ -6,6 +6,11 @@ import NewsPage from './components/news/NewsPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SharedPortfolioView from './components/sharing/SharedPortfolioView';
+import Layout from './components/layout/Layout';
+import DashboardPage from './pages/DashboardPage';
+import PortfolioPage from './pages/PortfolioPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import HistoryPage from './pages/HistoryPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { MultiPortfolioProvider } from './contexts/MultiPortfolioContext';
@@ -32,17 +37,49 @@ const App: React.FC = () => {
                           <Routes>
                             <Route path="/" element={
                               <ProtectedRoute>
-                                <StockDashboard />
+                                <Layout>
+                                  <DashboardPage />
+                                </Layout>
                               </ProtectedRoute>
                             } />
-                            <Route path="/goals" element={
+                            <Route path="/portfolio" element={
                               <ProtectedRoute>
-                                <GoalsPage />
+                                <Layout>
+                                  <PortfolioPage />
+                                </Layout>
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/analytics" element={
+                              <ProtectedRoute>
+                                <Layout>
+                                  <AnalyticsPage />
+                                </Layout>
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/history" element={
+                              <ProtectedRoute>
+                                <Layout>
+                                  <HistoryPage />
+                                </Layout>
                               </ProtectedRoute>
                             } />
                             <Route path="/news" element={
                               <ProtectedRoute>
-                                <NewsPage />
+                                <Layout>
+                                  <NewsPage />
+                                </Layout>
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/goals" element={
+                              <ProtectedRoute>
+                                <Layout>
+                                  <GoalsPage />
+                                </Layout>
+                              </ProtectedRoute>
+                            } />
+                            <Route path="/legacy" element={
+                              <ProtectedRoute>
+                                <StockDashboard />
                               </ProtectedRoute>
                             } />
                             <Route path="/share/:shareId" element={<SharedPortfolioView />} />
