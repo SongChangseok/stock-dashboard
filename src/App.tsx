@@ -7,10 +7,12 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SharedPortfolioView from './components/sharing/SharedPortfolioView';
 import Layout from './components/layout/Layout';
-import DashboardPage from './pages/DashboardPage';
-import PortfolioPage from './pages/PortfolioPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import HistoryPage from './pages/HistoryPage';
+
+// Lazy load page components for better performance
+const DashboardPage = React.lazy(() => import('./pages/DashboardPage'));
+const PortfolioPage = React.lazy(() => import('./pages/PortfolioPage'));
+const AnalyticsPage = React.lazy(() => import('./pages/AnalyticsPage'));
+const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 import { AuthProvider } from './contexts/AuthContext';
 import { PortfolioProvider } from './contexts/PortfolioContext';
 import { MultiPortfolioProvider } from './contexts/MultiPortfolioContext';
@@ -38,28 +40,36 @@ const App: React.FC = () => {
                             <Route path="/" element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <DashboardPage />
+                                  <Suspense fallback={<div className="p-6 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div></div>}>
+                                    <DashboardPage />
+                                  </Suspense>
                                 </Layout>
                               </ProtectedRoute>
                             } />
                             <Route path="/portfolio" element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <PortfolioPage />
+                                  <Suspense fallback={<div className="p-6 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div></div>}>
+                                    <PortfolioPage />
+                                  </Suspense>
                                 </Layout>
                               </ProtectedRoute>
                             } />
                             <Route path="/analytics" element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <AnalyticsPage />
+                                  <Suspense fallback={<div className="p-6 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div></div>}>
+                                    <AnalyticsPage />
+                                  </Suspense>
                                 </Layout>
                               </ProtectedRoute>
                             } />
                             <Route path="/history" element={
                               <ProtectedRoute>
                                 <Layout>
-                                  <HistoryPage />
+                                  <Suspense fallback={<div className="p-6 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green"></div></div>}>
+                                    <HistoryPage />
+                                  </Suspense>
                                 </Layout>
                               </ProtectedRoute>
                             } />
