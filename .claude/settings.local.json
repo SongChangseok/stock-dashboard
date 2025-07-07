@@ -36,7 +36,10 @@
       "Bash(npm run format:*)",
       "Bash(mkdir:*)",
       "Bash(chmod:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh auth:*)",
+      "Bash(export:*)"
     ],
     "deny": []
   }

@@ -118,6 +118,22 @@ VITE_NEWS_API_BASE_URL=https://newsapi.org/v2
 - **Stock Data**: Alpha Vantage (free tier: 5 requests/minute)
 - **News Data**: NewsAPI.org (free tier: 500 requests/day)
 
+## Documentation Update Requirements
+
+**IMPORTANT**: After completing any major development task, always update the following documentation:
+
+### Required Updates
+1. **CLAUDE.md**: Update project status, features, and architecture changes
+2. **docs/prd.md**: Update product requirements and feature status
+3. **docs/page-refactoring-plan.md**: Update implementation progress and completion status
+4. **README.md**: Update setup instructions and feature descriptions if needed
+
+### Documentation Maintenance
+- Mark completed features with ✅ 
+- Update version numbers and dates
+- Add new features to relevant sections
+- Remove deprecated information
+
 ## Current Status: Phase 2 Complete ✅
 
 All major features implemented:
@@ -126,3 +142,8 @@ All major features implemented:
 - ✅ Goal tracking system
 - ✅ Portfolio history
 - ✅ News integration
+
+### Next Phase: Page Refactoring 🚧
+- 📋 Page separation plan completed
+- 🔄 Implementation in progress
+- 📊 6 pages planned: Dashboard, Portfolio, Analytics, History, News, Goals
