@@ -10,15 +10,6 @@ interface EnvConfig {
     anonKey: string;
   };
   
-  // Alpha Vantage API Configuration
-  alphaVantage: {
-    apiKey: string;
-    baseUrl: string;
-    updateInterval: number;
-    enableLogging: boolean;
-    enableMockData: boolean;
-  };
-  
   // News API Configuration
   newsApi: {
     apiKey: string;
@@ -35,14 +26,10 @@ const envSchema = {
   required: [
     'VITE_SUPABASE_URL',
     'VITE_SUPABASE_ANON_KEY',
-    'VITE_ALPHA_VANTAGE_API_KEY',
   ],
   optional: [
     'VITE_NEWS_API_KEY',
     'VITE_NEWS_API_BASE_URL',
-    'VITE_PRICE_UPDATE_INTERVAL',
-    'VITE_ENABLE_API_LOGGING',
-    'VITE_ENABLE_MOCK_DATA',
   ],
 };
 
@@ -133,14 +120,6 @@ const createEnvConfig = (): EnvConfig => {
       anonKey: getEnvVar('VITE_SUPABASE_ANON_KEY'),
     },
     
-    alphaVantage: {
-      apiKey: getEnvVar('VITE_ALPHA_VANTAGE_API_KEY'),
-      baseUrl: 'https://www.alphavantage.co/query',
-      updateInterval: getNumberEnvVar('VITE_PRICE_UPDATE_INTERVAL', 60000),
-      enableLogging: getBooleanEnvVar('VITE_ENABLE_API_LOGGING', false),
-      enableMockData: getBooleanEnvVar('VITE_ENABLE_MOCK_DATA', false),
-    },
-    
     newsApi: {
       apiKey: getEnvVar('VITE_NEWS_API_KEY', ''),
       baseUrl: getEnvVar('VITE_NEWS_API_BASE_URL', 'https://newsapi.org/v2'),
@@ -159,7 +138,6 @@ const createEnvConfig = (): EnvConfig => {
   // Validate API keys
   validateApiKey(config.supabase.url, 'Supabase URL');
   validateApiKey(config.supabase.anonKey, 'Supabase');
-  validateApiKey(config.alphaVantage.apiKey, 'Alpha Vantage');
   
   if (config.newsApi.apiKey) {
     validateApiKey(config.newsApi.apiKey, 'News API');
@@ -171,12 +149,6 @@ const createEnvConfig = (): EnvConfig => {
       supabase: {
         url: config.supabase.url,
         anonKey: config.supabase.anonKey ? '***' : 'not set',
-      },
-      alphaVantage: {
-        apiKey: config.alphaVantage.apiKey ? '***' : 'not set',
-        updateInterval: config.alphaVantage.updateInterval,
-        enableLogging: config.alphaVantage.enableLogging,
-        enableMockData: config.alphaVantage.enableMockData,
       },
       newsApi: {
         apiKey: config.newsApi.apiKey ? '***' : 'not set',

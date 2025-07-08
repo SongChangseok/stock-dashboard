@@ -3,8 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Stock } from '../../types/portfolio';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
-import { useStockPrices } from '../../contexts/StockPriceContext';
-import { TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 interface HeatmapChartProps {
   stocks: Stock[];
@@ -26,7 +25,6 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
   title = 'Performance Heatmap',
   className = '',
 }) => {
-  const { stockPrices } = useStockPrices();
   const [selectedMetric, setSelectedMetric] = useState<
     'profitLoss' | 'profitLossPercent' | 'weight'
   >('profitLossPercent');
@@ -37,16 +35,15 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
     if (stocks.length === 0) return [];
 
     const data = stocks.map(stock => {
-      const realTimePrice =
-        stockPrices.get(stock.ticker)?.price || stock.currentPrice;
-      const marketValue = realTimePrice * stock.quantity;
-      const profitLoss = (realTimePrice - stock.buyPrice) * stock.quantity;
+      const currentPrice = stock.currentPrice;
+      const marketValue = currentPrice * stock.quantity;
+      const profitLoss = (currentPrice - stock.buyPrice) * stock.quantity;
       const profitLossPercent =
-        ((realTimePrice - stock.buyPrice) / stock.buyPrice) * 100;
+        ((currentPrice - stock.buyPrice) / stock.buyPrice) * 100;
 
       return {
         ticker: stock.ticker,
-        value: realTimePrice,
+        value: currentPrice,
         profitLoss,
         profitLossPercent,
         marketValue,
@@ -61,7 +58,7 @@ const HeatmapChart: React.FC<HeatmapChartProps> = ({
     });
 
     return data;
-  }, [stocks, stockPrices]);
+  }, [stocks]);
 
   if (heatmapData.length === 0) return null;
 

@@ -8,8 +8,6 @@ import {
   isProfitable,
 } from '../../utils/stockHelpers';
 import { formatPrice, formatPercentage } from '../../utils/formatters';
-import { useStockPrices } from '../../contexts/StockPriceContext';
-import PriceChange from '../common/PriceChange';
 
 interface StockRowProps {
   stock: Stock;
@@ -28,25 +26,15 @@ const StockRow: React.FC<StockRowProps> = ({
   isSelected = false,
   onToggleSelect
 }) => {
-  const { getStockPrice, isLoading } = useStockPrices();
-
-  // 실시간 가격 데이터 가져오기
-  const realTimeQuote = getStockPrice(stock.ticker);
-
-  // 현재 가격 (실시간 데이터가 있으면 사용, 없으면 기본 가격)
-  const currentPrice = realTimeQuote?.price ?? stock.currentPrice;
-
-  // 계산된 값들 (실시간 가격 기준)
-  const { profitLoss, profitLossPercent, marketValue, isProfit } =
-    useMemo(() => {
-      const stockWithRealTimePrice = { ...stock, currentPrice };
-      return {
-        profitLoss: calculateProfitLoss(stockWithRealTimePrice),
-        profitLossPercent: calculateProfitLossPercent(stockWithRealTimePrice),
-        marketValue: calculateMarketValue(stockWithRealTimePrice),
-        isProfit: isProfitable(stockWithRealTimePrice),
-      };
-    }, [stock, currentPrice]);
+  // 사용자 입력 데이터 기반 계산
+  const { profitLoss, profitLossPercent, marketValue, isProfit } = useMemo(() => {
+    return {
+      profitLoss: calculateProfitLoss(stock),
+      profitLossPercent: calculateProfitLossPercent(stock),
+      marketValue: calculateMarketValue(stock),
+      isProfit: isProfitable(stock),
+    };
+  }, [stock]);
 
   return (
     <tr className={`hover:bg-white/5 transition-all duration-200 ${isSelected ? 'bg-spotify-green/10' : ''}`}>
@@ -66,19 +54,8 @@ const StockRow: React.FC<StockRowProps> = ({
       <td className="px-8 py-6 text-slate-300 font-medium">
         {formatPrice(stock.buyPrice)}
       </td>
-      <td className="px-8 py-6">
-        <PriceChange
-          currentPrice={currentPrice}
-          previousPrice={stock.currentPrice}
-          change={realTimeQuote?.change}
-          changePercent={realTimeQuote?.changePercent}
-          isLoading={isLoading}
-          isStale={false}
-          showAnimation={true}
-          size="sm"
-          showIcon={false}
-          showPercent={false}
-        />
+      <td className="px-8 py-6 text-slate-300 font-medium">
+        {formatPrice(stock.currentPrice)}
       </td>
       <td className="px-8 py-6 text-slate-300 font-medium">{stock.quantity}</td>
       <td className="px-8 py-6 text-white font-semibold">

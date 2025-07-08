@@ -43,7 +43,6 @@ import PortfolioHistoryChart from '../charts/PortfolioHistoryChart';
 import ProfitLossChart from '../charts/ProfitLossChart';
 import PerformanceComparisonChart from '../charts/PerformanceComparisonChart';
 import { calculatePortfolioData } from '../../utils/portfolioCalculations';
-import { useStockPrices } from '../../contexts/StockPriceContext';
 
 interface AnalyticsCardProps {
   title: string;
@@ -95,7 +94,6 @@ const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
 
 const PortfolioAnalytics: React.FC = () => {
   const { state } = usePortfolio();
-  const { stockPrices } = useStockPrices();
   const [activeTab, setActiveTab] = useState<
     | 'overview'
     | 'performance'
@@ -114,7 +112,7 @@ const PortfolioAnalytics: React.FC = () => {
   >('distribution');
 
   const analytics = calculatePortfolioAnalytics(state.stocks);
-  const portfolioData = calculatePortfolioData(state.stocks, stockPrices);
+  const portfolioData = calculatePortfolioData(state.stocks, new Map());
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <Activity size={16} /> },

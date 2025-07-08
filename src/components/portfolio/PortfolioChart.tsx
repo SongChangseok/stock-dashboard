@@ -3,7 +3,6 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { PortfolioData } from '../../types/portfolio';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { usePortfolio } from '../../contexts/PortfolioContext';
-import { useStockPrices } from '../../contexts/StockPriceContext';
 import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 
 interface PortfolioChartProps {
@@ -12,7 +11,6 @@ interface PortfolioChartProps {
 
 const PortfolioChart: React.FC<PortfolioChartProps> = ({ data }) => {
   const { state } = usePortfolio();
-  const { stockPrices } = useStockPrices();
   const [selectedStock, setSelectedStock] = useState<PortfolioData | null>(
     null
   );
@@ -22,11 +20,9 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({ data }) => {
   // 전체 포트폴리오 가치 계산
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
 
-  // 전체 손익 계산 (실시간 가격 고려)
+  // 전체 손익 계산 (현재 가격 기준)
   const totalProfitLoss = state.stocks.reduce((sum, stock) => {
-    const realTimePrice =
-      stockPrices.get(stock.ticker)?.price || stock.currentPrice;
-    const profitLoss = (realTimePrice - stock.buyPrice) * stock.quantity;
+    const profitLoss = (stock.currentPrice - stock.buyPrice) * stock.quantity;
     return sum + profitLoss;
   }, 0);
 

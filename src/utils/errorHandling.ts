@@ -164,10 +164,6 @@ export const logError = (error: any, context?: string): void => {
     console.error('Error logged:', errorInfo);
   }
   
-  // Log to console if API logging is enabled
-  if (env.alphaVantage.enableLogging) {
-    console.error('Error logged:', errorInfo);
-  }
 
   // In production, you might want to send to an error tracking service
   // Example: sendToErrorTrackingService(errorInfo);

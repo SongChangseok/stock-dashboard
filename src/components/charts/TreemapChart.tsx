@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { PortfolioData } from '../../types/portfolio';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
-import { useStockPrices } from '../../contexts/StockPriceContext';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface TreemapChartProps {
@@ -23,24 +22,18 @@ const TreemapChart: React.FC<TreemapChartProps> = ({
   title = 'Portfolio Allocation',
   className = '',
 }) => {
-  const { stockPrices } = useStockPrices();
   const [selectedStock, setSelectedStock] = useState<TreemapData | null>(null);
 
   if (data.length === 0) return null;
 
-  // 데이터에 손익 정보 추가
+  // 데이터에 손익 정보 추가 (현재 가격 기준)
   const enhancedData: TreemapData[] = data.map(stock => {
-    const realTimeQuote = stockPrices.get(stock.name);
     const quantity = stock.quantity || 1;
     const originalPrice = stock.value / quantity;
 
-    const profitLoss = realTimeQuote
-      ? (realTimeQuote.price - originalPrice) * quantity
-      : 0;
-    const profitLossPercent =
-      realTimeQuote && originalPrice > 0
-        ? ((realTimeQuote.price - originalPrice) / originalPrice) * 100
-        : 0;
+    // 기본적으로 손익 정보는 0으로 설정 (실제 주식 데이터에서 계산해야 함)
+    const profitLoss = 0;
+    const profitLossPercent = 0;
 
     return {
       ...stock,

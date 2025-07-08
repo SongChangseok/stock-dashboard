@@ -12,7 +12,6 @@ import {
   ExportData,
 } from '../types/portfolio';
 import { calculatePortfolioMetrics } from '../utils/portfolioMetrics';
-import { saveToLocalStorage, loadFromLocalStorage } from '../utils/portfolio';
 import { validatePortfolioData } from '../utils/validation';
 import { useToast } from './ToastContext';
 
@@ -43,8 +42,6 @@ interface PortfolioContextType {
   importStocks: (data: ExportData) => void;
   exportStocks: () => ExportData;
   clearError: () => void;
-  loadFromStorage: () => void;
-  saveToStorage: () => void;
 }
 
 // Initial state
@@ -161,26 +158,10 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, dispatch] = useReducer(portfolioReducer, initialState);
   const { addToast } = useToast();
 
-  // Initialize data from localStorage on mount
+  // Initialize with default stocks
   useEffect(() => {
-    const loadInitialData = () => {
-      try {
-        const savedData = loadFromLocalStorage<Stock[]>('portfolio-stocks');
-        if (savedData && Array.isArray(savedData) && savedData.length > 0) {
-          dispatch({ type: 'SET_STOCKS', payload: savedData });
-        } else {
-          // If no saved data, use default stocks and save them
-          dispatch({ type: 'SET_STOCKS', payload: state.stocks });
-          saveToLocalStorage('portfolio-stocks', state.stocks);
-        }
-      } catch (error) {
-        // If loading fails, use default stocks
-        dispatch({ type: 'SET_STOCKS', payload: state.stocks });
-      }
-    };
-
-    loadInitialData();
-  }, []); // Empty dependency array to run only once on mount
+    dispatch({ type: 'SET_STOCKS', payload: initialState.stocks });
+  }, []);
 
   // Add stock
   const addStock = useCallback(
@@ -351,37 +332,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
-  // Load from storage
-  const loadFromStorage = useCallback(() => {
-    try {
-      const savedData = loadFromLocalStorage<Stock[]>('portfolio-stocks');
-      if (savedData && Array.isArray(savedData)) {
-        dispatch({ type: 'SET_STOCKS', payload: savedData });
-      }
-    } catch (error) {
-      dispatch({
-        type: 'SET_ERROR',
-        payload: 'Failed to load data from storage',
-      });
-    }
-  }, []);
-
-  // Save to storage
-  const saveToStorage = useCallback(() => {
-    try {
-      saveToLocalStorage('portfolio-stocks', state.stocks);
-    } catch (error) {
-      dispatch({
-        type: 'SET_ERROR',
-        payload: 'Failed to save data to storage',
-      });
-    }
-  }, [state.stocks]);
-
-  // Auto-save to storage whenever stocks change
-  useEffect(() => {
-    saveToStorage();
-  }, [state.stocks, saveToStorage]);
 
   // Context value
   const value: PortfolioContextType = {
@@ -392,8 +342,6 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({
     importStocks,
     exportStocks,
     clearError,
-    loadFromStorage,
-    saveToStorage,
   };
 
   return (

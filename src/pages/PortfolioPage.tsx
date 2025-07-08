@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
-import { useStockPrices } from '../contexts/StockPriceContext';
 import { Stock } from '../types/portfolio';
 import PortfolioSummaryCard from '../components/portfolio/PortfolioSummaryCard';
 import PortfolioActions from '../components/portfolio/PortfolioActions';
@@ -11,7 +10,6 @@ import EnhancedPortfolioTable from '../components/portfolio/EnhancedPortfolioTab
 import ImportExportManager from '../components/portfolio/ImportExportManager';
 import Modal from '../components/common/Modal';
 import StockForm from '../components/stock/StockForm';
-import ApiStatusBanner from '../components/common/ApiStatusBanner';
 import { calculateMarketValue } from '../utils/stockHelpers';
 import { usePortfolioActions } from '../components/portfolio/hooks/usePortfolioActions';
 import { usePortfolioFilters } from '../components/portfolio/hooks/usePortfolioFilters';
@@ -28,7 +26,6 @@ const PortfolioPage: React.FC = () => {
     clearError,
   } = usePortfolio();
   const { stocks = [], metrics, error } = state || {};
-  const { errors: stockPriceErrors } = useStockPrices();
 
   // Custom hooks - moved before any conditional returns
   const portfolioActions = usePortfolioActions({
@@ -136,9 +133,6 @@ const PortfolioPage: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-      {/* API Status Banner */}
-      <ApiStatusBanner errors={stockPriceErrors} />
-      
       {/* Portfolio Summary */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Portfolio Management</h1>

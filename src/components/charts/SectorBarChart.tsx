@@ -13,7 +13,6 @@ import {
 } from 'recharts';
 import { Stock } from '../../types/portfolio';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
-import { useStockPrices } from '../../contexts/StockPriceContext';
 import { TrendingUp, TrendingDown, PieChart, BarChart3 } from 'lucide-react';
 
 interface SectorBarChartProps {
@@ -59,7 +58,6 @@ const SectorBarChart: React.FC<SectorBarChartProps> = ({
   title = 'Sector Distribution',
   className = '',
 }) => {
-  const { stockPrices } = useStockPrices();
   const [viewMode, setViewMode] = useState<'allocation' | 'performance'>(
     'allocation'
   );
@@ -83,9 +81,7 @@ const SectorBarChart: React.FC<SectorBarChartProps> = ({
 
     // 전체 포트폴리오 가치 계산
     const totalValue = stocks.reduce((sum, stock) => {
-      const realTimePrice =
-        stockPrices.get(stock.ticker)?.price || stock.currentPrice;
-      return sum + realTimePrice * stock.quantity;
+      return sum + stock.currentPrice * stock.quantity;
     }, 0);
 
     // 섹터별 데이터 생성
@@ -95,9 +91,7 @@ const SectorBarChart: React.FC<SectorBarChartProps> = ({
         let sectorInvestment = 0;
 
         sectorStocks.forEach(stock => {
-          const realTimePrice =
-            stockPrices.get(stock.ticker)?.price || stock.currentPrice;
-          sectorValue += realTimePrice * stock.quantity;
+          sectorValue += stock.currentPrice * stock.quantity;
           sectorInvestment += stock.buyPrice * stock.quantity;
         });
 
@@ -122,7 +116,7 @@ const SectorBarChart: React.FC<SectorBarChartProps> = ({
         };
       })
       .sort((a, b) => b.allocation - a.allocation); // 할당률 순으로 정렬
-  }, [stocks, stockPrices]);
+  }, [stocks]);
 
   if (sectorData.length === 0) return null;
 
