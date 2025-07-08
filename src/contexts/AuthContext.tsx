@@ -1,22 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  updateProfile as firebaseUpdateProfile,
-  updateEmail as firebaseUpdateEmail,
-  deleteUser,
-  sendEmailVerification as firebaseSendEmailVerification,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  GoogleAuthProvider,
-  signInWithPopup,
-  User as FirebaseUser,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
+import { supabase } from '../config/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import {
   AuthContextType,
   AuthState,
@@ -92,59 +76,105 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Convert Firebase user to our User type
-  const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-    const userData = userDoc.data();
+  // Convert Supabase user to our User type
+  const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', supabaseUser.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching user data:', error);
+    }
 
     return {
-      id: firebaseUser.uid,
-      email: firebaseUser.email!,
-      displayName: firebaseUser.displayName || userData?.displayName,
-      photoURL: firebaseUser.photoURL || userData?.photoURL,
-      emailVerified: firebaseUser.emailVerified,
-      createdAt: userData?.createdAt?.toDate() || new Date(),
+      id: supabaseUser.id,
+      email: supabaseUser.email!,
+      displayName: userData?.display_name || supabaseUser.user_metadata?.display_name,
+      photoURL: userData?.photo_url || supabaseUser.user_metadata?.photo_url,
+      emailVerified: supabaseUser.email_confirmed_at !== null,
+      createdAt: userData?.created_at ? new Date(userData.created_at) : new Date(),
       lastLoginAt: new Date(),
       preferences: userData?.preferences || DEFAULT_USER_PREFERENCES,
-      uid: firebaseUser.uid,
-      providerId: firebaseUser.providerId,
-      isAnonymous: firebaseUser.isAnonymous,
-      metadata: firebaseUser.metadata,
-      providerData: firebaseUser.providerData,
-      refreshToken: firebaseUser.refreshToken,
-      tenantId: firebaseUser.tenantId,
-      delete: firebaseUser.delete,
-      getIdToken: firebaseUser.getIdToken,
-      getIdTokenResult: firebaseUser.getIdTokenResult,
-      reload: firebaseUser.reload,
+      uid: supabaseUser.id,
+      providerId: supabaseUser.app_metadata?.provider || 'email',
+      isAnonymous: supabaseUser.is_anonymous || false,
+      metadata: {
+        creationTime: supabaseUser.created_at,
+        lastSignInTime: supabaseUser.last_sign_in_at,
+      },
+      providerData: supabaseUser.identities || [],
+      refreshToken: supabaseUser.refresh_token || '',
+      tenantId: null,
+      delete: async () => {
+        const { error } = await supabase.auth.admin.deleteUser(supabaseUser.id);
+        if (error) throw error;
+      },
+      getIdToken: async () => {
+        const { data } = await supabase.auth.getSession();
+        return data.session?.access_token || '';
+      },
+      getIdTokenResult: async () => {
+        const { data } = await supabase.auth.getSession();
+        return {
+          token: data.session?.access_token || '',
+          expirationTime: data.session?.expires_at ? new Date(data.session.expires_at * 1000).toISOString() : '',
+          authTime: data.session?.issued_at ? new Date(data.session.issued_at * 1000).toISOString() : '',
+          issuedAtTime: data.session?.issued_at ? new Date(data.session.issued_at * 1000).toISOString() : '',
+          signInProvider: supabaseUser.app_metadata?.provider || 'email',
+          signInSecondFactor: null,
+          claims: data.session?.user?.app_metadata || {},
+        };
+      },
+      reload: async () => {
+        const { data } = await supabase.auth.getUser();
+        return data.user;
+      },
     };
   };
 
-  // Save user data to Firestore
-  const saveUserToFirestore = async (user: FirebaseUser, additionalData: any = {}) => {
+  // Save user data to Supabase
+  const saveUserToSupabase = async (user: SupabaseUser, additionalData: any = {}) => {
     try {
-      const userRef = doc(db, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      if (!userDoc.exists()) {
+      if (!existingUser) {
         // Create new user document
-        await setDoc(userRef, {
-          email: user.email,
-          displayName: user.displayName || additionalData.displayName,
-          photoURL: user.photoURL,
-          createdAt: new Date(),
-          lastLoginAt: new Date(),
-          preferences: DEFAULT_USER_PREFERENCES,
-          ...additionalData,
-        });
+        const { error } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email!,
+            display_name: user.user_metadata?.display_name || additionalData.displayName,
+            photo_url: user.user_metadata?.photo_url,
+            email_verified: user.email_confirmed_at !== null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            last_login_at: new Date().toISOString(),
+            preferences: DEFAULT_USER_PREFERENCES,
+            ...additionalData,
+          });
+
+        if (error) throw error;
       } else {
         // Update last login time
-        await updateDoc(userRef, {
-          lastLoginAt: new Date(),
-        });
+        const { error } = await supabase
+          .from('users')
+          .update({
+            last_login_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
+
+        if (error) throw error;
       }
     } catch (error) {
-      console.error('Error saving user to Firestore:', error);
+      console.error('Error saving user to Supabase:', error);
     }
   };
 
@@ -159,9 +189,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const result = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
-      await saveUserToFirestore(result.user);
-      const user = await convertFirebaseUser(result.user);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error('No user returned from sign in');
+
+      await saveUserToSupabase(data.user);
+      const user = await convertSupabaseUser(data.user);
       
       refreshSessionActivity();
       dispatch({ type: 'SET_USER', payload: user });
@@ -186,23 +223,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const result = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      
-      // Update profile with display name
-      if (data.displayName) {
-        await firebaseUpdateProfile(result.user, {
-          displayName: data.displayName,
-        });
-      }
-
-      await saveUserToFirestore(result.user, {
-        displayName: data.displayName,
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            display_name: data.displayName,
+          },
+        },
       });
 
-      // Send email verification
-      await firebaseSendEmailVerification(result.user);
+      if (error) throw error;
+      if (!authData.user) throw new Error('No user returned from sign up');
 
-      const user = await convertFirebaseUser(result.user);
+      await saveUserToSupabase(authData.user, {
+        display_name: data.displayName,
+      });
+
+      const user = await convertSupabaseUser(authData.user);
       
       refreshSessionActivity();
       dispatch({ type: 'SET_USER', payload: user });
@@ -221,7 +259,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      await firebaseSignOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       localStorage.removeItem('lastActivity');
       dispatch({ type: 'SET_USER', payload: null });
     } catch (error: any) {
@@ -237,24 +277,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      let authProvider;
+      let supabaseProvider: 'google' | 'github' | 'apple';
       
       switch (provider) {
         case 'google':
-          authProvider = new GoogleAuthProvider();
+          supabaseProvider = 'google';
           break;
         default:
           throw new Error(`Provider ${provider} not implemented yet`);
       }
 
-      const result = await signInWithPopup(auth, authProvider);
-      await saveUserToFirestore(result.user);
-      const user = await convertFirebaseUser(result.user);
-      
-      refreshSessionActivity();
-      dispatch({ type: 'SET_USER', payload: user });
-      
-      return user;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: supabaseProvider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      // Note: OAuth flow will redirect, so we handle the user in the auth state change listener
+      return {} as User; // This will be updated by the auth state listener
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
@@ -268,7 +311,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      await sendPasswordResetEmail(auth, email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      
+      if (error) throw error;
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
@@ -279,18 +326,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Update profile
   const updateProfile = async (data: UpdateProfileData): Promise<void> => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
 
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      await firebaseUpdateProfile(auth.currentUser, data);
-      
-      // Update Firestore document
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        displayName: data.displayName,
-        photoURL: data.photoURL,
+      // Update user metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          display_name: data.displayName,
+          photo_url: data.photoURL,
+        },
       });
+
+      if (updateError) throw updateError;
+      
+      // Update users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({
+          display_name: data.displayName,
+          photo_url: data.photoURL,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (dbError) throw dbError;
 
       dispatch({ type: 'UPDATE_USER', payload: data });
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -303,14 +365,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Update user preferences
   const updateUserPreferences = async (preferences: Partial<UserPreferences>): Promise<void> => {
-    if (!auth.currentUser || !state.user) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !state.user) throw new Error('No authenticated user');
 
     try {
       const updatedPreferences = { ...state.user.preferences, ...preferences };
       
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        preferences: updatedPreferences,
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({
+          preferences: updatedPreferences,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
 
       dispatch({ type: 'UPDATE_USER', payload: { preferences: updatedPreferences } });
     } catch (error: any) {
@@ -322,10 +391,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Send email verification
   const sendEmailVerification = async (): Promise<void> => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
     
     try {
-      await firebaseSendEmailVerification(auth.currentUser);
+      // Supabase sends email verification automatically on signup
+      // For resending, we can use the resend endpoint
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email!,
+      });
+      
+      if (error) throw error;
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
@@ -335,12 +412,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Change password
   const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
 
     try {
-      const credential = EmailAuthProvider.credential(auth.currentUser.email!, currentPassword);
-      await reauthenticateWithCredential(auth.currentUser, credential);
-      // Note: Firebase doesn't have updatePassword in v9, use reauthentication flow
+      // First verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: currentPassword,
+      });
+      
+      if (signInError) throw new Error('Current password is incorrect');
+      
+      // Update password
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) throw error;
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       dispatch({ type: 'SET_ERROR', payload: errorMessage });
@@ -350,16 +439,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Update email
   const updateEmail = async (newEmail: string, password: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
 
     try {
-      const credential = EmailAuthProvider.credential(auth.currentUser.email!, password);
-      await reauthenticateWithCredential(auth.currentUser, credential);
-      await firebaseUpdateEmail(auth.currentUser, newEmail);
+      // First verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: password,
+      });
       
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+      if (signInError) throw new Error('Current password is incorrect');
+      
+      // Update email
+      const { error } = await supabase.auth.updateUser({
         email: newEmail,
       });
+      
+      if (error) throw error;
+      
+      // Update users table
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({
+          email: newEmail,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (dbError) throw dbError;
 
       dispatch({ type: 'UPDATE_USER', payload: { email: newEmail } });
     } catch (error: any) {
@@ -371,17 +479,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Delete account
   const deleteAccount = async (password: string): Promise<void> => {
-    if (!auth.currentUser) throw new Error('No authenticated user');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
 
     try {
-      const credential = EmailAuthProvider.credential(auth.currentUser.email!, password);
-      await reauthenticateWithCredential(auth.currentUser, credential);
+      // First verify current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email!,
+        password: password,
+      });
       
-      // Delete user data from Firestore
-      await deleteDoc(doc(db, 'users', auth.currentUser.uid));
+      if (signInError) throw new Error('Current password is incorrect');
+      
+      // Delete user data from database (tables will cascade delete due to foreign keys)
+      const { error: dbError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', user.id);
+
+      if (dbError) throw dbError;
       
       // Delete user account
-      await deleteUser(auth.currentUser);
+      const { error } = await supabase.auth.admin.deleteUser(user.id);
+      if (error) throw error;
       
       dispatch({ type: 'SET_USER', payload: null });
     } catch (error: any) {
@@ -401,11 +521,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return state.user;
   };
 
-  // Refresh token (placeholder)
+  // Refresh token
   const refreshToken = async (): Promise<void> => {
-    if (auth.currentUser) {
-      await auth.currentUser.getIdToken(true);
-    }
+    const { error } = await supabase.auth.refreshSession();
+    if (error) throw error;
   };
 
   // Placeholder implementations for other methods
@@ -421,16 +540,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen to auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      if (firebaseUser) {
+      if (session?.user) {
         try {
-          const user = await convertFirebaseUser(firebaseUser);
+          const user = await convertSupabaseUser(session.user);
           dispatch({ type: 'SET_USER', payload: user });
           refreshSessionActivity();
         } catch (error) {
-          console.error('Error converting Firebase user:', error);
+          console.error('Error converting Supabase user:', error);
           dispatch({ type: 'SET_USER', payload: null });
         }
       } else {
@@ -438,7 +557,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const value: AuthContextType = {

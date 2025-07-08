@@ -1,19 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  increment,
-  serverTimestamp,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { supabase } from '../config/supabase';
 import { 
   PortfolioShare, 
   ShareablePortfolio, 
@@ -25,8 +10,8 @@ import {
 import { Portfolio } from '../types/portfolio';
 
 export class PortfolioSharingService {
-  private static readonly COLLECTION_SHARES = 'portfolioShares';
-  private static readonly COLLECTION_PUBLIC_PORTFOLIOS = 'publicPortfolios';
+  private static readonly TABLE_SHARES = 'portfolio_shares';
+  private static readonly TABLE_PUBLIC_PORTFOLIOS = 'public_portfolios';
 
   // Generate a unique share ID
   private static generateShareId(): string {
@@ -65,7 +50,26 @@ export class PortfolioSharingService {
         },
       };
 
-      await setDoc(doc(db, this.COLLECTION_SHARES, shareId), shareData);
+      const { error: shareError } = await supabase
+        .from(this.TABLE_SHARES)
+        .insert({
+          id: shareId,
+          portfolio_id: portfolio.id,
+          user_id: userId,
+          share_id: shareId,
+          is_public: settings.isPublic,
+          allow_comments: settings.allowComments,
+          expires_at: expiresAt?.toISOString(),
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+          view_count: 0,
+          metadata: {
+            title: settings.customTitle || portfolio.name,
+            description: settings.customDescription || portfolio.description,
+          },
+        });
+
+      if (shareError) throw shareError;
 
       // If public, create public portfolio document
       if (settings.isPublic) {
@@ -76,10 +80,11 @@ export class PortfolioSharingService {
           userId
         );
         
-        await setDoc(
-          doc(db, this.COLLECTION_PUBLIC_PORTFOLIOS, shareId), 
-          shareablePortfolio
-        );
+        const { error: publicError } = await supabase
+          .from(this.TABLE_PUBLIC_PORTFOLIOS)
+          .insert(shareablePortfolio);
+
+        if (publicError) throw publicError;
       }
 
       return shareId;
@@ -97,8 +102,11 @@ export class PortfolioSharingService {
     userId: string
   ): Promise<ShareablePortfolio> {
     // Get user info for attribution
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    const userData = userDoc.data();
+    const { data: userData } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
     return {
       id: shareId,
@@ -125,8 +133,8 @@ export class PortfolioSharingService {
       shareId,
       viewCount: 0,
       sharedBy: {
-        displayName: settings.includePersonalInfo ? userData?.displayName : undefined,
-        photoURL: settings.includePersonalInfo ? userData?.photoURL : undefined,
+        displayName: settings.includePersonalInfo ? userData?.display_name : undefined,
+        photoURL: settings.includePersonalInfo ? userData?.photo_url : undefined,
       },
     };
   }
@@ -134,37 +142,46 @@ export class PortfolioSharingService {
   // Get shared portfolio by share ID
   static async getSharedPortfolio(shareId: string): Promise<ShareablePortfolio | null> {
     try {
-      const shareDoc = await getDoc(doc(db, this.COLLECTION_SHARES, shareId));
+      const { data: shareData, error: shareError } = await supabase
+        .from(this.TABLE_SHARES)
+        .select('*')
+        .eq('share_id', shareId)
+        .single();
       
-      if (!shareDoc.exists()) {
+      if (shareError || !shareData) {
         return null;
       }
 
-      const shareData = shareDoc.data() as PortfolioShare;
-
       // Check if share is expired
-      if (shareData.expiresAt && shareData.expiresAt.toDate() < new Date()) {
+      if (shareData.expires_at && new Date(shareData.expires_at) < new Date()) {
         return null;
       }
 
       // Increment view count
-      await updateDoc(doc(db, this.COLLECTION_SHARES, shareId), {
-        viewCount: increment(1),
-        updatedAt: serverTimestamp(),
-      });
+      await supabase
+        .from(this.TABLE_SHARES)
+        .update({
+          view_count: shareData.view_count + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('share_id', shareId);
 
       // Get public portfolio data
-      const publicDoc = await getDoc(doc(db, this.COLLECTION_PUBLIC_PORTFOLIOS, shareId));
+      const { data: portfolioData, error: portfolioError } = await supabase
+        .from(this.TABLE_PUBLIC_PORTFOLIOS)
+        .select('*')
+        .eq('share_id', shareId)
+        .single();
       
-      if (!publicDoc.exists()) {
+      if (portfolioError || !portfolioData) {
         return null;
       }
-
-      const portfolioData = publicDoc.data() as ShareablePortfolio;
       
       return {
         ...portfolioData,
-        viewCount: shareData.viewCount + 1,
+        viewCount: shareData.view_count + 1,
+        createdAt: new Date(portfolioData.created_at),
+        updatedAt: new Date(portfolioData.updated_at),
       };
     } catch (error) {
       console.error('Error getting shared portfolio:', error);
@@ -179,34 +196,42 @@ export class PortfolioSharingService {
     settings: Partial<ShareSettings>
   ): Promise<void> {
     try {
-      const shareRef = doc(db, this.COLLECTION_SHARES, shareId);
-      const shareDoc = await getDoc(shareRef);
+      const { data: shareData, error: fetchError } = await supabase
+        .from(this.TABLE_SHARES)
+        .select('*')
+        .eq('share_id', shareId)
+        .single();
 
-      if (!shareDoc.exists()) {
+      if (fetchError || !shareData) {
         throw new Error('Share not found');
       }
 
-      const shareData = shareDoc.data() as PortfolioShare;
-
-      if (shareData.userId !== userId) {
+      if (shareData.user_id !== userId) {
         throw new Error('Unauthorized');
       }
 
-      await updateDoc(shareRef, {
-        ...settings,
-        updatedAt: serverTimestamp(),
-      });
+      const { error: updateError } = await supabase
+        .from(this.TABLE_SHARES)
+        .update({
+          is_public: settings.isPublic,
+          allow_comments: settings.allowComments,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('share_id', shareId);
+
+      if (updateError) throw updateError;
 
       // Update public portfolio if visibility changed
       if (settings.isPublic !== undefined) {
-        const publicRef = doc(db, this.COLLECTION_PUBLIC_PORTFOLIOS, shareId);
-        
         if (settings.isPublic) {
           // Make public - create/update public document
           // Implementation would need the original portfolio data
         } else {
           // Make private - delete public document
-          await deleteDoc(publicRef);
+          await supabase
+            .from(this.TABLE_PUBLIC_PORTFOLIOS)
+            .delete()
+            .eq('share_id', shareId);
         }
       }
     } catch (error) {
@@ -218,23 +243,24 @@ export class PortfolioSharingService {
   // Delete share
   static async deleteShare(shareId: string, userId: string): Promise<void> {
     try {
-      const shareRef = doc(db, this.COLLECTION_SHARES, shareId);
-      const shareDoc = await getDoc(shareRef);
+      const { data: shareData, error: fetchError } = await supabase
+        .from(this.TABLE_SHARES)
+        .select('*')
+        .eq('share_id', shareId)
+        .single();
 
-      if (!shareDoc.exists()) {
+      if (fetchError || !shareData) {
         throw new Error('Share not found');
       }
 
-      const shareData = shareDoc.data() as PortfolioShare;
-
-      if (shareData.userId !== userId) {
+      if (shareData.user_id !== userId) {
         throw new Error('Unauthorized');
       }
 
       // Delete both share and public portfolio documents
       await Promise.all([
-        deleteDoc(shareRef),
-        deleteDoc(doc(db, this.COLLECTION_PUBLIC_PORTFOLIOS, shareId)),
+        supabase.from(this.TABLE_SHARES).delete().eq('share_id', shareId),
+        supabase.from(this.TABLE_PUBLIC_PORTFOLIOS).delete().eq('share_id', shareId),
       ]);
     } catch (error) {
       console.error('Error deleting share:', error);
@@ -245,19 +271,26 @@ export class PortfolioSharingService {
   // Get user's shares
   static async getUserShares(userId: string): Promise<PortfolioShare[]> {
     try {
-      const sharesQuery = query(
-        collection(db, this.COLLECTION_SHARES),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      );
-
-      const snapshot = await getDocs(sharesQuery);
+      const { data, error } = await supabase
+        .from(this.TABLE_SHARES)
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
       
-      return snapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        expiresAt: doc.data().expiresAt?.toDate(),
+      if (error) throw error;
+      
+      return (data || []).map(share => ({
+        id: share.id,
+        portfolioId: share.portfolio_id,
+        userId: share.user_id,
+        shareId: share.share_id,
+        isPublic: share.is_public,
+        allowComments: share.allow_comments,
+        expiresAt: share.expires_at ? new Date(share.expires_at) : undefined,
+        createdAt: new Date(share.created_at),
+        updatedAt: new Date(share.updated_at),
+        viewCount: share.view_count,
+        metadata: share.metadata,
       })) as PortfolioShare[];
     } catch (error) {
       console.error('Error getting user shares:', error);
@@ -268,18 +301,26 @@ export class PortfolioSharingService {
   // Get popular public portfolios
   static async getPopularPortfolios(limitCount = 10): Promise<ShareablePortfolio[]> {
     try {
-      const portfoliosQuery = query(
-        collection(db, this.COLLECTION_PUBLIC_PORTFOLIOS),
-        orderBy('viewCount', 'desc'),
-        limit(limitCount)
-      );
-
-      const snapshot = await getDocs(portfoliosQuery);
+      const { data, error } = await supabase
+        .from(this.TABLE_PUBLIC_PORTFOLIOS)
+        .select('*')
+        .order('view_count', { ascending: false })
+        .limit(limitCount);
       
-      return snapshot.docs.map(doc => ({
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+      if (error) throw error;
+      
+      return (data || []).map(portfolio => ({
+        ...portfolio,
+        createdAt: new Date(portfolio.created_at),
+        updatedAt: new Date(portfolio.updated_at),
+        totalValue: portfolio.total_value,
+        dailyChange: portfolio.daily_change,
+        dailyChangePercent: portfolio.daily_change_percent,
+        isPublic: portfolio.is_public,
+        shareUrl: portfolio.share_url,
+        shareId: portfolio.share_id,
+        viewCount: portfolio.view_count,
+        sharedBy: portfolio.shared_by,
       })) as ShareablePortfolio[];
     } catch (error) {
       console.error('Error getting popular portfolios:', error);

@@ -8,6 +8,7 @@ import {
   parseApiError,
 } from '../utils/apiConfig';
 import { handleApiError, retryOperation } from '../utils/errorHandling';
+import { env } from '../config/env';
 
 class StockApiService {
   private rateLimitTracker: Map<string, number> = new Map();
@@ -18,6 +19,11 @@ class StockApiService {
   // 단일 주식 실시간 가격 조회
   async getStockQuote(symbol: string): Promise<StockQuote> {
     try {
+      // Mock 데이터 모드 체크
+      if (env.alphaVantage.enableMockData) {
+        return this.getMockQuote(symbol);
+      }
+
       // 캐시 확인
       const cached = this.getCachedData(symbol);
       if (cached) {
@@ -40,8 +46,20 @@ class StockApiService {
 
       const data = await response.json();
 
+      // API 키 제한 체크
+      if (data.Information && data.Information.includes('rate limit')) {
+        console.warn('Alpha Vantage API rate limit reached. Switching to mock data.');
+        return this.getMockQuote(symbol);
+      }
+
       if (!isValidApiResponse(data)) {
-        throw new Error(parseApiError(data));
+        const error = parseApiError(data);
+        // API 제한인 경우 Mock 데이터 사용
+        if (error.includes('rate limit') || error.includes('premium')) {
+          console.warn(`API limit reached for ${symbol}. Using mock data.`);
+          return this.getMockQuote(symbol);
+        }
+        throw new Error(error);
       }
 
       const quote = this.transformApiResponse(data);
@@ -50,6 +68,12 @@ class StockApiService {
 
       return quote;
     } catch (error: any) {
+      // API 제한 관련 에러인 경우 Mock 데이터 반환
+      if (error.message?.includes('rate limit') || error.message?.includes('premium')) {
+        console.warn(`API error for ${symbol}. Using mock data: ${error.message}`);
+        return this.getMockQuote(symbol);
+      }
+      
       const apiError = handleApiError(error);
       throw new Error(apiError.message);
     }
@@ -194,6 +218,46 @@ class StockApiService {
   // Rate limit 상태 조회
   public getRateLimitStatus(): Map<string, number> {
     return new Map(this.rateLimitTracker);
+  }
+
+  // Mock 데이터 생성
+  private getMockQuote(symbol: string): StockQuote {
+    // 기본 주식 데이터
+    const baseData = {
+      AAPL: { price: 175.50, name: 'Apple Inc.' },
+      GOOGL: { price: 2750.30, name: 'Alphabet Inc.' },
+      MSFT: { price: 420.15, name: 'Microsoft Corporation' },
+      AMZN: { price: 3400.75, name: 'Amazon.com Inc.' },
+      TSLA: { price: 850.25, name: 'Tesla Inc.' },
+      META: { price: 485.60, name: 'Meta Platforms Inc.' },
+      NVDA: { price: 875.40, name: 'NVIDIA Corporation' },
+      JPM: { price: 165.80, name: 'JPMorgan Chase & Co.' },
+      JNJ: { price: 170.25, name: 'Johnson & Johnson' },
+      V: { price: 250.90, name: 'Visa Inc.' },
+    };
+
+    const data = baseData[symbol as keyof typeof baseData] || { price: 100, name: `${symbol} Corporation` };
+    
+    // 약간의 랜덤 변동 추가 (±3%)
+    const variation = (Math.random() - 0.5) * 0.06;
+    const price = data.price * (1 + variation);
+    const previousClose = price * (1 - variation * 0.5);
+    const change = price - previousClose;
+    const changePercent = (change / previousClose) * 100;
+
+    return {
+      symbol: symbol.toUpperCase(),
+      price: Number(price.toFixed(2)),
+      open: Number((price * 0.98).toFixed(2)),
+      high: Number((price * 1.02).toFixed(2)),
+      low: Number((price * 0.96).toFixed(2)),
+      volume: Math.floor(Math.random() * 10000000) + 1000000,
+      previousClose: Number(previousClose.toFixed(2)),
+      change: Number(change.toFixed(2)),
+      changePercent: Number(changePercent.toFixed(2)),
+      lastTradingDay: new Date().toISOString().split('T')[0],
+      lastUpdated: new Date(),
+    };
   }
 }
 

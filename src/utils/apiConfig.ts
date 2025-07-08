@@ -1,10 +1,10 @@
 // API 설정 및 유틸리티
+import { env } from '../config/env';
 
 export const API_CONFIG = {
   ALPHA_VANTAGE: {
-    BASE_URL: 'https://www.alphavantage.co/query',
-    // 실제 운영 시에는 환경변수에서 가져오세요
-    API_KEY: process.env.REACT_APP_ALPHA_VANTAGE_API_KEY || 'demo',
+    BASE_URL: env.alphaVantage.baseUrl,
+    API_KEY: env.alphaVantage.apiKey,
     ENDPOINTS: {
       GLOBAL_QUOTE: 'GLOBAL_QUOTE',
       TIME_SERIES_INTRADAY: 'TIME_SERIES_INTRADAY',
@@ -14,7 +14,7 @@ export const API_CONFIG = {
       REQUESTS_PER_DAY: 500,
     },
   },
-  DEFAULT_UPDATE_INTERVAL: 60000, // 1 minute
+  DEFAULT_UPDATE_INTERVAL: env.alphaVantage.updateInterval,
   MAX_RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 2000, // 2 seconds
 };
@@ -36,7 +36,13 @@ export const buildApiUrl = (
 
 // API 키 검증
 export const isValidApiKey = (apiKey: string): boolean => {
-  return Boolean(apiKey && apiKey !== 'demo' && apiKey.length > 10);
+  return Boolean(
+    apiKey && 
+    apiKey !== 'demo' && 
+    apiKey.length > 10 &&
+    !apiKey.includes('your_') &&
+    !apiKey.includes('_here')
+  );
 };
 
 // Rate limiting 체크

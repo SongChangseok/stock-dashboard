@@ -5,6 +5,7 @@ import {
   StockNewsRequest,
   NewsApiConfig,
 } from '../types/news';
+import { env } from '../config/env';
 
 class NewsApiService {
   private config: NewsApiConfig;
@@ -13,10 +14,8 @@ class NewsApiService {
 
   constructor() {
     this.config = {
-      apiKey: (import.meta as any).env?.VITE_NEWS_API_KEY || '',
-      baseUrl:
-        (import.meta as any).env?.VITE_NEWS_API_BASE_URL ||
-        'https://newsapi.org/v2',
+      apiKey: env.newsApi.apiKey,
+      baseUrl: env.newsApi.baseUrl,
       defaultPageSize: 20,
       maxCacheAge: 10 * 60 * 1000, // 10 minutes
     };

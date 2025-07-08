@@ -1,5 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { env } from '../config/env';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -78,7 +79,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {env.isDevelopment && this.state.error && (
               <div className="mb-6 p-4 bg-red-900/20 border border-red-500/20 rounded-lg text-left">
                 <h3 className="text-red-400 font-semibold mb-2">
                   Error Details:

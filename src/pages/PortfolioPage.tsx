@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
+import { useStockPrices } from '../contexts/StockPriceContext';
 import { Stock, StockFormData } from '../types/portfolio';
 import PortfolioTableHeader, { SortField, SortDirection } from '../components/portfolio/PortfolioTableHeader';
 import PortfolioFilters, { FilterOptions } from '../components/portfolio/PortfolioFilters';
@@ -7,6 +8,7 @@ import EnhancedPortfolioTable from '../components/portfolio/EnhancedPortfolioTab
 import ImportExportManager from '../components/portfolio/ImportExportManager';
 import Modal from '../components/common/Modal';
 import StockForm from '../components/stock/StockForm';
+import ApiStatusBanner from '../components/common/ApiStatusBanner';
 import { calculateMarketValue } from '../utils/stockHelpers';
 
 const PortfolioPage: React.FC = () => {
@@ -19,7 +21,20 @@ const PortfolioPage: React.FC = () => {
     exportStocks,
     clearError,
   } = usePortfolio();
-  const { stocks, metrics, error } = state;
+  const { stocks = [], metrics, error } = state || {};
+  const { errors: stockPriceErrors } = useStockPrices();
+  
+  // Safety check for portfolio context
+  if (!state) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading portfolio...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
@@ -49,7 +64,15 @@ const PortfolioPage: React.FC = () => {
 
   // Computed values
   const totalValue = useMemo(() => {
-    return stocks.reduce((sum, stock) => sum + calculateMarketValue(stock), 0);
+    if (!stocks || stocks.length === 0) return 0;
+    return stocks.reduce((sum, stock) => {
+      try {
+        return sum + calculateMarketValue(stock);
+      } catch (error) {
+        console.warn('Error calculating market value for stock:', stock, error);
+        return sum;
+      }
+    }, 0);
   }, [stocks]);
 
   // Handlers
@@ -135,22 +158,42 @@ const PortfolioPage: React.FC = () => {
   }, [exportStocks]);
 
   const handleImportData = useCallback((file: File): void => {
+    if (!file) {
+      setImportError('No file selected');
+      return;
+    }
+    
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const data = JSON.parse(e.target?.result as string);
+        const result = e.target?.result;
+        if (!result) {
+          throw new Error('Failed to read file');
+        }
+        
+        const data = JSON.parse(result as string);
         importStocks(data);
         setShowImportModal(false);
         setImportError('');
       } catch (error) {
-        setImportError((error as Error).message);
+        const message = error instanceof Error ? error.message : 'Invalid file format';
+        setImportError(message);
+        console.error('Import error:', error);
       }
     };
+    
+    reader.onerror = () => {
+      setImportError('Failed to read file');
+    };
+    
     reader.readAsText(file);
   }, [importStocks]);
 
   return (
     <div className="p-6">
+      {/* API Status Banner */}
+      <ApiStatusBanner errors={stockPriceErrors} />
+      
       {/* Page Header */}
       <PortfolioTableHeader
         searchTerm={searchTerm}
@@ -177,11 +220,11 @@ const PortfolioPage: React.FC = () => {
 
       {/* Enhanced Portfolio Table */}
       <EnhancedPortfolioTable
-        stocks={stocks}
+        stocks={stocks || []}
         onEditStock={handleEditStock}
         onDeleteStock={handleDeleteStock}
         onAddStock={handleAddStock}
-        searchTerm={searchTerm}
+        searchTerm={searchTerm || ''}
         filters={filters}
         sortField={sortField}
         sortDirection={sortDirection}

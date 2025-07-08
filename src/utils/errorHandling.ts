@@ -1,4 +1,5 @@
 // Error handling utilities for API calls and general error management
+import { env } from '../config/env';
 
 export interface ApiError {
   message: string;
@@ -159,7 +160,12 @@ export const logError = (error: any, context?: string): void => {
   };
 
   // In development, log to console
-  if (process.env.NODE_ENV === 'development') {
+  if (env.isDevelopment) {
+    console.error('Error logged:', errorInfo);
+  }
+  
+  // Log to console if API logging is enabled
+  if (env.alphaVantage.enableLogging) {
     console.error('Error logged:', errorInfo);
   }
 

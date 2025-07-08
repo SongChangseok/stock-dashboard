@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { useMultiPortfolio } from '../contexts/MultiPortfolioContext';
+import { useStockPrices } from '../contexts/StockPriceContext';
 import PortfolioSelector from '../components/portfolio/PortfolioSelector';
 import PortfolioComparisonChart from '../components/portfolio/PortfolioComparisonChart';
 import DashboardSummary from '../components/dashboard/DashboardSummary';
@@ -9,12 +10,14 @@ import DashboardChart from '../components/dashboard/DashboardChart';
 import QuickActions from '../components/dashboard/QuickActions';
 import Modal from '../components/common/Modal';
 import StockForm from '../components/stock/StockForm';
+import ApiStatusBanner from '../components/common/ApiStatusBanner';
 import { StockFormData } from '../types/portfolio';
 
 const DashboardPage: React.FC = () => {
   const { state, addStock } = usePortfolio();
   const { stocks, metrics } = state;
   const { getPortfolioSummaries } = useMultiPortfolio();
+  const { errors } = useStockPrices();
   
   const [showComparison, setShowComparison] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -89,6 +92,9 @@ const DashboardPage: React.FC = () => {
           <PortfolioComparisonChart className="mb-6" />
         )}
       </div>
+
+      {/* API Status Banner */}
+      <ApiStatusBanner errors={errors} />
 
       {/* Summary Cards */}
       <DashboardSummary

@@ -1,7 +1,5 @@
-import { User as FirebaseUser } from 'firebase/auth';
-
-// User interface extending Firebase User
-export interface User extends Omit<FirebaseUser, 'toJSON'> {
+// User interface for authentication
+export interface User {
   id: string;
   email: string;
   displayName?: string;
@@ -120,7 +118,7 @@ export interface AuthContextType extends AuthState, AuthMethods {
   updateUserPreferences: (preferences: Partial<UserPreferences>) => Promise<void>;
 }
 
-// Firebase error mapping
+// Auth error mapping
 export interface AuthErrorInfo {
   code: AuthError;
   message: string;

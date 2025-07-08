@@ -116,8 +116,17 @@ export const StockPriceProvider: React.FC<StockPriceProviderProps> = ({
       const errorCount = errors.size;
       const totalStocks = tickers.length;
 
-      // 50% 이상 실패 시에만 알림
-      if (errorCount / totalStocks >= 0.5) {
+      // API 제한 경고 메시지
+      const hasRateLimitError = Array.from(errors.values()).some(error => 
+        error?.message?.includes('rate limit') || error?.message?.includes('premium')
+      );
+
+      if (hasRateLimitError) {
+        console.warn(
+          'Alpha Vantage API daily limit reached. Using mock data for stock prices. ' +
+          'Consider upgrading to a premium plan for unlimited requests.'
+        );
+      } else if (errorCount / totalStocks >= 0.5) {
         console.warn(
           `Failed to fetch prices for ${errorCount} out of ${totalStocks} stocks`
         );

@@ -1,16 +1,16 @@
-import { FirestoreService } from './firestoreService';
+import { SupabaseService } from './supabaseService';
 import { Portfolio } from '../types/portfolio';
 import { Goal } from '../types/goals';
 
 export class MigrationService {
-  // Migrate localStorage data to Firestore for authenticated user
+  // Migrate localStorage data to Supabase for authenticated user
   static async migrateUserData(userId: string): Promise<void> {
     try {
       console.log('Starting data migration for user:', userId);
 
-      // Check if user data already exists in Firestore
-      const existingPortfolios = await FirestoreService.getUserPortfolios(userId);
-      const existingGoals = await FirestoreService.getUserGoals(userId);
+      // Check if user data already exists in Supabase
+      const existingPortfolios = await SupabaseService.getUserPortfolios(userId);
+      const existingGoals = await SupabaseService.getUserGoals(userId);
 
       // Only migrate if no existing data found
       if (existingPortfolios.length === 0 && existingGoals.length === 0) {
@@ -18,7 +18,7 @@ export class MigrationService {
         await this.migrateGoalsFromLocalStorage(userId);
         console.log('Data migration completed successfully');
       } else {
-        console.log('User already has data in Firestore, skipping migration');
+        console.log('User already has data in Supabase, skipping migration');
       }
     } catch (error) {
       console.error('Error during data migration:', error);
@@ -26,7 +26,7 @@ export class MigrationService {
     }
   }
 
-  // Migrate portfolios from localStorage to Firestore
+  // Migrate portfolios from localStorage to Supabase
   private static async migratePortfoliosFromLocalStorage(userId: string): Promise<void> {
     try {
       // Get portfolios from localStorage
@@ -36,7 +36,7 @@ export class MigrationService {
         console.log('Migrating', localPortfolios.length, 'portfolios from localStorage');
         
         for (const portfolio of localPortfolios) {
-          // Create portfolio in Firestore
+          // Create portfolio in Supabase
           const portfolioData = {
             name: portfolio.name,
             totalValue: portfolio.totalValue,
@@ -45,12 +45,12 @@ export class MigrationService {
             stocks: portfolio.stocks || [],
           };
 
-          const portfolioId = await FirestoreService.createPortfolio(userId, portfolioData);
+          const portfolioId = await SupabaseService.createPortfolio(userId, portfolioData);
           
           // Add stocks to the portfolio
           if (portfolio.stocks && portfolio.stocks.length > 0) {
             for (const stock of portfolio.stocks) {
-              await FirestoreService.addStock(portfolioId, {
+              await SupabaseService.addStock(portfolioId, {
                 symbol: stock.symbol,
                 name: stock.name,
                 quantity: stock.quantity,
@@ -70,7 +70,7 @@ export class MigrationService {
     }
   }
 
-  // Migrate goals from localStorage to Firestore
+  // Migrate goals from localStorage to Supabase
   private static async migrateGoalsFromLocalStorage(userId: string): Promise<void> {
     try {
       // Get goals from localStorage
@@ -92,7 +92,7 @@ export class MigrationService {
             isCompleted: goal.isCompleted,
           };
 
-          await FirestoreService.createGoal(userId, goalData);
+          await SupabaseService.createGoal(userId, goalData);
         }
       }
     } catch (error) {
@@ -137,7 +137,7 @@ export class MigrationService {
   // Export user data for backup purposes
   static async exportUserDataForBackup(userId: string): Promise<string> {
     try {
-      const userData = await FirestoreService.exportUserData(userId);
+      const userData = await SupabaseService.exportUserData(userId);
       return JSON.stringify(userData, null, 2);
     } catch (error) {
       console.error('Error exporting user data:', error);

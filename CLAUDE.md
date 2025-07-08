@@ -108,17 +108,36 @@ src/
 
 ### Required Environment Variables
 ```bash
-# Alpha Vantage (Stock Prices)
-REACT_APP_ALPHA_VANTAGE_API_KEY=your_key_here
+# Supabase (Database & Auth) - REQUIRED
+VITE_SUPABASE_URL=your_supabase_project_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
-# News API (Market News)
-VITE_NEWS_API_KEY=your_key_here
+# Alpha Vantage (Stock Prices) - REQUIRED
+VITE_ALPHA_VANTAGE_API_KEY=your_api_key_here
+```
+
+### Optional Environment Variables
+```bash
+# News API (Market News) - OPTIONAL
+VITE_NEWS_API_KEY=your_news_api_key_here
 VITE_NEWS_API_BASE_URL=https://newsapi.org/v2
+
+# API Configuration - OPTIONAL
+VITE_PRICE_UPDATE_INTERVAL=60000
+VITE_ENABLE_API_LOGGING=false
+VITE_ENABLE_MOCK_DATA=false
 ```
 
 ### API Sources
+- **Database**: Supabase (authentication, user data, portfolio storage)
 - **Stock Data**: Alpha Vantage (free tier: 5 requests/minute)
 - **News Data**: NewsAPI.org (free tier: 500 requests/day)
+
+### Environment Setup
+1. Copy `.env.example` to `.env`
+2. Replace placeholder values with actual API keys
+3. Application will validate required variables on startup
+4. Missing required variables will show clear error messages
 
 ## Documentation Update Requirements
 
@@ -155,3 +174,4 @@ All phase refactoring completed:
 - **Bundle Optimization**: Separate chunks for heavy components (11.58kb History page)
 - **Memory Efficiency**: useCallback/useMemo optimization across contexts
 - **User Experience**: Smooth navigation with loading states and Suspense
+- **Environment Management**: Centralized, type-safe configuration with validation
