@@ -78,14 +78,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Convert Supabase user to our User type
   const convertSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
-    const { data: userData, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching user data:', error);
+    let userData = null;
+    
+    // Try to get user data from database with timeout, but don't block if it fails
+    try {
+      const { data, error } = await Promise.race([
+        supabase.from('users').select('*').eq('id', supabaseUser.id).single(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]) as any;
+      
+      if (!error && data) {
+        userData = data;
+      }
+    } catch (error) {
+      // Silently continue without database data
+      console.log('Using auth data only (DB unavailable)');
     }
 
     return {
@@ -538,26 +545,66 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     throw new Error('Not implemented yet');
   };
 
-  // Listen to auth state changes
+  // Initialize auth state and listen to changes
   useEffect(() => {
+    let isMounted = true;
+    let initialized = false;
+
+    // Listen to auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      dispatch({ type: 'SET_LOADING', payload: true });
+      if (!isMounted) return;
       
-      if (session?.user) {
-        try {
-          const user = await convertSupabaseUser(session.user);
+      console.log('Auth event:', event, session ? 'has session' : 'no session');
+      
+      try {
+        if (event === 'INITIAL_SESSION') {
+          // Handle initial session - this is the key for remember me
+          if (session?.user) {
+            const user = await convertSupabaseUser(session.user);
+            dispatch({ type: 'SET_USER', payload: user });
+            refreshSessionActivity();
+          } else {
+            dispatch({ type: 'SET_USER', payload: null });
+          }
+          initialized = true;
+          dispatch({ type: 'SET_LOADING', payload: false });
+        } else if (event === 'SIGNED_IN') {
+          const user = await convertSupabaseUser(session!.user);
           dispatch({ type: 'SET_USER', payload: user });
           refreshSessionActivity();
-        } catch (error) {
-          console.error('Error converting Supabase user:', error);
+        } else if (event === 'SIGNED_OUT') {
           dispatch({ type: 'SET_USER', payload: null });
+        } else if (event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            const user = await convertSupabaseUser(session.user);
+            dispatch({ type: 'SET_USER', payload: user });
+            refreshSessionActivity();
+          }
         }
-      } else {
+      } catch (error) {
+        console.error('Error in auth state change:', error);
         dispatch({ type: 'SET_USER', payload: null });
+        if (event === 'INITIAL_SESSION') {
+          initialized = true;
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Fallback timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (!initialized && isMounted) {
+        console.log('Auth initialization timeout - forcing completion');
+        dispatch({ type: 'SET_USER', payload: null });
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const value: AuthContextType = {

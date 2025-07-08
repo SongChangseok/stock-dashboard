@@ -15,9 +15,19 @@ interface StockRowProps {
   stock: Stock;
   onEdit: (stock: Stock) => void;
   onDelete: (id: number) => void;
+  bulkMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-const StockRow: React.FC<StockRowProps> = ({ stock, onEdit, onDelete }) => {
+const StockRow: React.FC<StockRowProps> = ({ 
+  stock, 
+  onEdit, 
+  onDelete, 
+  bulkMode = false,
+  isSelected = false,
+  onToggleSelect
+}) => {
   const { getStockPrice, isLoading } = useStockPrices();
 
   // 실시간 가격 데이터 가져오기
@@ -39,7 +49,17 @@ const StockRow: React.FC<StockRowProps> = ({ stock, onEdit, onDelete }) => {
     }, [stock, currentPrice]);
 
   return (
-    <tr className="hover:bg-white/5 transition-all duration-200">
+    <tr className={`hover:bg-white/5 transition-all duration-200 ${isSelected ? 'bg-spotify-green/10' : ''}`}>
+      {bulkMode && (
+        <td className="px-6 py-6">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+            className="rounded bg-spotify-gray border-gray-600 text-spotify-green focus:ring-spotify-green focus:ring-offset-0"
+          />
+        </td>
+      )}
       <td className="px-8 py-6">
         <div className="font-bold text-white text-lg">{stock.ticker}</div>
       </td>

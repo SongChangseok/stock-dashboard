@@ -50,7 +50,7 @@ const PortfolioFilters: React.FC<PortfolioFiltersProps> = React.memo(({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* P&L Filters */}
         <div>
           <h4 className="text-sm font-medium text-gray-300 mb-3">Performance</h4>

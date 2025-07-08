@@ -1,15 +1,21 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { usePortfolio } from '../contexts/PortfolioContext';
 import { useStockPrices } from '../contexts/StockPriceContext';
-import { Stock, StockFormData } from '../types/portfolio';
-import PortfolioTableHeader, { SortField, SortDirection } from '../components/portfolio/PortfolioTableHeader';
-import PortfolioFilters, { FilterOptions } from '../components/portfolio/PortfolioFilters';
+import { Stock } from '../types/portfolio';
+import PortfolioSummaryCard from '../components/portfolio/PortfolioSummaryCard';
+import PortfolioActions from '../components/portfolio/PortfolioActions';
+import PortfolioSearchBar from '../components/portfolio/PortfolioSearchBar';
+import BulkOperationsBar from '../components/portfolio/BulkOperationsBar';
+import PortfolioFilters from '../components/portfolio/PortfolioFilters';
 import EnhancedPortfolioTable from '../components/portfolio/EnhancedPortfolioTable';
 import ImportExportManager from '../components/portfolio/ImportExportManager';
 import Modal from '../components/common/Modal';
 import StockForm from '../components/stock/StockForm';
 import ApiStatusBanner from '../components/common/ApiStatusBanner';
 import { calculateMarketValue } from '../utils/stockHelpers';
+import { usePortfolioActions } from '../components/portfolio/hooks/usePortfolioActions';
+import { usePortfolioFilters } from '../components/portfolio/hooks/usePortfolioFilters';
+import { useBulkOperations } from '../components/portfolio/hooks/useBulkOperations';
 
 const PortfolioPage: React.FC = () => {
   const {
@@ -23,44 +29,53 @@ const PortfolioPage: React.FC = () => {
   } = usePortfolio();
   const { stocks = [], metrics, error } = state || {};
   const { errors: stockPriceErrors } = useStockPrices();
+
+  // Custom hooks - moved before any conditional returns
+  const portfolioActions = usePortfolioActions({
+    onAddStock: addStock,
+    onUpdateStock: updateStock,
+    onDeleteStock: deleteStock,
+    onImportData: (file: File) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const result = e.target?.result;
+          if (!result) {
+            throw new Error('Failed to read file');
+          }
+          
+          const data = JSON.parse(result as string);
+          importStocks(data);
+        } catch (error) {
+          console.error('Import error:', error);
+        }
+      };
+      
+      reader.onerror = () => {
+        console.error('Failed to read file');
+      };
+      
+      reader.readAsText(file);
+    },
+    onExportData: () => {
+      const exportData = exportStocks();
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `portfolio_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    },
+  });
+
+  const portfolioFilters = usePortfolioFilters(stocks);
   
-  // Safety check for portfolio context
-  if (!state) {
-    return (
-      <div className="p-6 flex items-center justify-center min-h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green mx-auto mb-4"></div>
-          <p className="text-slate-400">Loading portfolio...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Modal states
-  const [showModal, setShowModal] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [editingStockId, setEditingStockId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<StockFormData>({
-    ticker: '',
-    buyPrice: '',
-    currentPrice: '',
-    quantity: '',
-  });
-
-  // Table states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortField, setSortField] = useState<SortField | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [filters, setFilters] = useState<FilterOptions>({
-    profitOnly: false,
-    lossOnly: false,
-    minValue: '',
-    maxValue: '',
-    minQuantity: '',
-    maxQuantity: '',
-  });
-  const [importError, setImportError] = useState('');
+  const bulkOperations = useBulkOperations(stocks);
 
   // Computed values
   const totalValue = useMemo(() => {
@@ -75,159 +90,114 @@ const PortfolioPage: React.FC = () => {
     }, 0);
   }, [stocks]);
 
-  // Handlers
-  const handleAddStock = useCallback((): void => {
-    setEditingStockId(null);
-    setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
-    setShowModal(true);
-  }, []);
+  // Safety check for portfolio context - moved after hooks
+  if (!state) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-spotify-green mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading portfolio...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleEditStock = useCallback((stock: Stock): void => {
-    setEditingStockId(stock.id);
-    setFormData({
-      ticker: stock.ticker,
-      buyPrice: stock.buyPrice.toString(),
-      currentPrice: stock.currentPrice.toString(),
-      quantity: stock.quantity.toString(),
-    });
-    setShowModal(true);
-  }, []);
+  // Bulk operations handlers
+  const handleBulkDelete = () => {
+    const selectedIds = Array.from(bulkOperations.selectedStocks);
+    selectedIds.forEach(id => deleteStock(id));
+    bulkOperations.exitBulkMode();
+  };
 
-  const handleDeleteStock = useCallback((id: number): void => {
-    deleteStock(id);
-  }, [deleteStock]);
-
-  const handleSubmit = useCallback((): void => {
-    if (
-      !formData.ticker ||
-      !formData.buyPrice ||
-      !formData.currentPrice ||
-      !formData.quantity
-    ) {
-      return;
-    }
-
-    if (editingStockId) {
-      updateStock(editingStockId, formData);
-    } else {
-      addStock(formData);
-    }
-
-    setShowModal(false);
-    setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
-  }, [formData, editingStockId, updateStock, addStock]);
-
-  const closeModal = useCallback((): void => {
-    setShowModal(false);
-    setFormData({ ticker: '', buyPrice: '', currentPrice: '', quantity: '' });
-  }, []);
-
-  const handleSort = useCallback((field: SortField): void => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField, sortDirection]);
-
-  const handleClearFilters = useCallback((): void => {
-    setFilters({
-      profitOnly: false,
-      lossOnly: false,
-      minValue: '',
-      maxValue: '',
-      minQuantity: '',
-      maxQuantity: '',
-    });
-  }, []);
-
-  const handleExportData = useCallback((): void => {
-    const exportData = exportStocks();
+  const handleBulkExport = () => {
+    const selectedStocks = bulkOperations.getSelectedStocks();
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      metadata: {
+        totalPositions: selectedStocks.length,
+        totalValue: selectedStocks.reduce((sum, stock) => sum + calculateMarketValue(stock), 0),
+      },
+      stocks: selectedStocks,
+    };
+    
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = `portfolio_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `portfolio_selected_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [exportStocks]);
-
-  const handleImportData = useCallback((file: File): void => {
-    if (!file) {
-      setImportError('No file selected');
-      return;
-    }
-    
-    const reader = new FileReader();
-    reader.onload = e => {
-      try {
-        const result = e.target?.result;
-        if (!result) {
-          throw new Error('Failed to read file');
-        }
-        
-        const data = JSON.parse(result as string);
-        importStocks(data);
-        setShowImportModal(false);
-        setImportError('');
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Invalid file format';
-        setImportError(message);
-        console.error('Import error:', error);
-      }
-    };
-    
-    reader.onerror = () => {
-      setImportError('Failed to read file');
-    };
-    
-    reader.readAsText(file);
-  }, [importStocks]);
+  };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* API Status Banner */}
       <ApiStatusBanner errors={stockPriceErrors} />
       
-      {/* Page Header */}
-      <PortfolioTableHeader
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onAddStock={handleAddStock}
-        onImport={() => setShowImportModal(true)}
-        onExport={handleExportData}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        showFilters={showFilters}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        totalStocks={stocks.length}
-        totalValue={totalValue}
-      />
+      {/* Portfolio Summary */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Portfolio Management</h1>
+        <PortfolioSummaryCard stocks={stocks} />
+      </div>
+
+      {/* Actions and Search */}
+      <div className="space-y-4">
+        {bulkOperations.bulkActionMode ? (
+          <BulkOperationsBar
+            selectedCount={bulkOperations.bulkStats.count}
+            totalCount={stocks.length}
+            onSelectAll={bulkOperations.selectAllStocks}
+            onDeselectAll={bulkOperations.deselectAllStocks}
+            onBulkExport={handleBulkExport}
+            onBulkDelete={handleBulkDelete}
+            onExitBulkMode={bulkOperations.exitBulkMode}
+          />
+        ) : (
+          <PortfolioActions
+            onAddStock={portfolioActions.handleAddStock}
+            onImport={portfolioActions.handleImport}
+            onExport={portfolioActions.handleExport}
+            onToggleBulkMode={bulkOperations.enterBulkMode}
+            totalCount={stocks.length}
+          />
+        )}
+        
+        <PortfolioSearchBar
+          searchTerm={portfolioFilters.searchTerm}
+          onSearchChange={portfolioFilters.setSearchTerm}
+          onClearSearch={portfolioFilters.handleClearFilters}
+          showFilters={portfolioFilters.showFilters}
+          onToggleFilters={portfolioFilters.toggleFilters}
+          hasActiveFilters={portfolioFilters.hasActiveFilters}
+        />
+      </div>
 
       {/* Filters */}
       <PortfolioFilters
-        filters={filters}
-        onFilterChange={setFilters}
-        onClearFilters={handleClearFilters}
-        isVisible={showFilters}
+        filters={portfolioFilters.filters}
+        onFilterChange={portfolioFilters.setFilters}
+        onClearFilters={portfolioFilters.handleClearFilters}
+        isVisible={portfolioFilters.showFilters}
       />
 
       {/* Enhanced Portfolio Table */}
       <EnhancedPortfolioTable
-        stocks={stocks || []}
-        onEditStock={handleEditStock}
-        onDeleteStock={handleDeleteStock}
-        onAddStock={handleAddStock}
-        searchTerm={searchTerm || ''}
-        filters={filters}
-        sortField={sortField}
-        sortDirection={sortDirection}
+        stocks={portfolioFilters.filteredAndSortedStocks}
+        onEditStock={portfolioActions.handleEditStock}
+        onDeleteStock={portfolioActions.handleDeleteStock}
+        onAddStock={portfolioActions.handleAddStock}
+        searchTerm={portfolioFilters.searchTerm}
+        filters={portfolioFilters.filters}
+        sortField={portfolioFilters.sortField}
+        sortDirection={portfolioFilters.sortDirection}
+        bulkMode={bulkOperations.bulkActionMode}
+        selectedStocks={bulkOperations.selectedStocks}
+        onToggleSelect={bulkOperations.toggleSelectStock}
       />
 
       {/* Error Display */}
@@ -247,26 +217,26 @@ const PortfolioPage: React.FC = () => {
 
       {/* Stock Form Modal */}
       <Modal
-        isOpen={showModal}
-        onClose={closeModal}
-        title={editingStockId ? 'Edit Stock' : 'Add New Stock'}
+        isOpen={portfolioActions.showModal}
+        onClose={portfolioActions.closeModal}
+        title={portfolioActions.editingStockId ? 'Edit Stock' : 'Add New Stock'}
       >
         <StockForm
-          formData={formData}
-          onFormChange={setFormData}
-          onSubmit={handleSubmit}
-          onCancel={closeModal}
-          isEditing={!!editingStockId}
+          formData={portfolioActions.formData}
+          onFormChange={portfolioActions.setFormData}
+          onSubmit={portfolioActions.handleSubmit}
+          onCancel={portfolioActions.closeModal}
+          isEditing={!!portfolioActions.editingStockId}
         />
       </Modal>
 
       {/* Import/Export Modal */}
       <ImportExportManager
-        isImportModalOpen={showImportModal}
-        onCloseImportModal={() => setShowImportModal(false)}
-        onImportData={handleImportData}
-        onExportData={handleExportData}
-        importError={importError}
+        isImportModalOpen={portfolioActions.showImportModal}
+        onCloseImportModal={portfolioActions.closeImportModal}
+        onImportData={portfolioActions.handleImportFile}
+        onExportData={portfolioActions.handleExport}
+        importError=""
       />
     </div>
   );
